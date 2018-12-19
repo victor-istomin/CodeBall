@@ -119,6 +119,7 @@
     <ClInclude Include="csimplesocket\PassiveSocket.h" />
     <ClInclude Include="csimplesocket\SimpleSocket.h" />
     <ClInclude Include="csimplesocket\StatTimer.h" />
+    <ClInclude Include="defines.h" />
     <ClInclude Include="Entity.h" />
     <ClInclude Include="linalg.h" />
     <ClInclude Include="model\Action.h" />

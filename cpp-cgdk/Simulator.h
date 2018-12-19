@@ -3,7 +3,27 @@
 #undef max
 #include "Entity.h"
 #include "model/Rules.h"
+#include "defines.h"
+
 #include <algorithm>
+#include <optional>
+#include <random>
+
+// #todo - move somewhere
+template <typename Rational, int Dim>
+linalg::vec<Rational, Dim> clamp(linalg::vec<Rational, Dim> vec, Rational max)
+{
+    auto length = linalg::length(vec);
+    if(length != 0)
+    {
+        Rational k = max / length;
+        if(k < 1)
+            vec *= k;
+    }
+
+    return vec;
+};
+
 
 class Simulator
 {
@@ -16,10 +36,17 @@ private:
 	const Rational     m_maxHitE;
 	const Rational     m_robotMass;
 	const Rational     m_ballMass;
+    const Rational     m_ballArenaE;
+    const Rational     m_maxEntitySpeed;
+    const Rational     m_gravity;
+    const Rational     m_maxRobotGroundSpeed;
     const model::Rules m_rules;
+    std::mt19937       m_rng;
 
 	template <typename Unit> auto getMass(const Unit& u) -> std::enable_if_t<std::is_base_of_v<model::Robot, Unit>, Rational> { return m_robotMass; }
 	template <typename Unit> auto getMass(const Unit& u) -> std::enable_if_t<std::is_base_of_v<model::Ball,  Unit>, Rational> { return m_ballMass; }
+    template <typename Unit> auto getArenaE(const Unit& u) -> std::enable_if_t<!std::is_base_of_v<model::Ball, Unit>, Rational> { return 0; }
+    template <typename Unit> auto getArenaE(const Unit& u) -> std::enable_if_t< std::is_base_of_v<model::Ball, Unit>, Rational> { return m_ballArenaE; }
 
 	struct Dan     // just following SDK naming, Distance And Normal
 	{
@@ -117,18 +144,148 @@ private:
             dan = std::min(dan, dan_to_sphere_inner(point, bottomHorizontal));
         }
 
-        
+        return dan;
+    }
+
+    Dan dan_to_arena(Vec3d point)
+    {
+        bool isNegateX = point.x < 0;
+        bool isNegateZ = point.z < 0;
+
+        if(isNegateX)
+            point.x = -point.x;
+        if(isNegateZ)
+            point.x = -point.z;
+
+        Dan results = dan_to_arena_quarter(point);
+        if(isNegateX)
+            results.normal.x = -results.normal.x;
+        if(isNegateZ)
+            results.normal.z = -results.normal.z;
+
+        return results;
+    }
+
+    // returns normal
+    template <typename EntityType>
+    std::optional<Vec3d> collide_with_arena(EntityType& e)
+    {
+        Dan dan = dan_to_arena(e.position());
+        Rational penetration = e.radius - dan.distance;
+        if(penetration > 0)
+        {
+            e.setPosition(e.position() + penetration * dan.normal);
+            Rational velocity = linalg::dot(e.velocity(), dan.normal) - e.radiusChangeSpeed();
+            if(velocity < 0)
+            {
+                e.setVelocity(e.velocity() - (1 + getArenaE(e)) * velocity * dan.normal);
+                return dan.normal;
+            }
+        }
+
+        return std::nullopt;
+    }
+
+    template <typename EntityType>
+    void move(EntityType& e, Rational delta_time)
+    {
+        e.setVelocity(clamp(e.velocity(), m_maxEntitySpeed));
+        e.setPosition(e.position() + e.velocity() * delta_time);
+
+        // separate step for gravity
+        e.y          -= m_gravity * delta_time * delta_time / 2;
+        e.velocity_y -= m_gravity * delta_time;
+    }
+
+    void update(std::vector<Entity<model::Robot>>& robots, Entity<model::Ball>& ball, Rational delta_time)
+    {
+        std::shuffle(robots.begin(), robots.end(), m_rng);
+
+        for(Entity<model::Robot>& robot : robots)
+        {
+            if(robot.touch)   // #todo - check whether it's set in Sim
+            {
+                Vec3d target_velocity = clamp(robot.actionTargetVelocity(), m_maxRobotGroundSpeed);
+                Rational ground_projection = linalg::dot(robot.touchNormal(), target_velocity);
+                Vec3d tmp = robot.touchNormal() * ground_projection;   // #WTF?
+                target_velocity = target_velocity - tmp;
+                Vec3d target_velocity_change = target_velocity - robot.velocity();
+
+                if(linalg::length(target_velocity_change) > 0)
+                {
+                    Rational acceleration = ROBOT_ACCELERATION * std::max(0.0, robot.touch_normal_y);
+                    robot.setVelocity(robot.velocity()
+                                       + clamp(
+                                           linalg::normalize(target_velocity_change) * acceleration * delta_time,
+                                           length(target_velocity_change)));
+                }
+            }
+
+            if(robot.action().use_nitro)
+            {
+                Vec3d target_velocity_change = clamp(robot.actionTargetVelocity() - robot.velocity(),
+                                                     robot.nitro_amount * NITRO_POINT_VELOCITY_CHANGE);
+
+                if(linalg::length(target_velocity_change) > 0)
+                {
+                    Vec3d acceleration = linalg::normalize(target_velocity_change) * ROBOT_NITRO_ACCELERATION;
+                    Vec3d velocity_change = clamp(acceleration * delta_time, linalg::length(target_velocity_change));
+
+                    robot.setVelocity(robot.velocity() + velocity_change);
+                    robot.nitro_amount -= linalg::length(velocity_change) / NITRO_POINT_VELOCITY_CHANGE;
+                }
+            }
+
+            move(robot, delta_time);
+            robot.radius = ROBOT_MIN_RADIUS + (ROBOT_MAX_RADIUS - ROBOT_MIN_RADIUS) * robot.action().jump_speed / ROBOT_MAX_JUMP_SPEED;
+            robot.setRadiusChangeSpeed(robot.action().jump_speed);
+        }
+
+        move(ball, delta_time);
+
+        for(int i = 0; i < (int)robots.size(); ++i)
+            for(int j = 0; j < i - 1; ++j)
+                collide_entities(robots[i], robots[j]);
+
+        for(Entity<model::Robot>& robot : robots)
+        {
+            collide_entities(robot, ball);
+
+            std::optional<Vec3d> collisionNormal = collide_with_arena(robot);
+            if(collisionNormal.has_value())
+            {
+                robot.touch = true;
+                robot.setTouchNormal(*collisionNormal);
+            }
+            else
+            {
+                robot.touch = false;
+            }
+        }
+
+        collide_with_arena(ball);
+
+        // #todo - goal callback
+        // if (abs(ball.position.z) > arena.depth / 2 + ball.radius)
+        //     goal_scored();
+
+        // #todo - nitro packs
     }
 
 
 public:
 
-	Simulator(const model::Rules& rules, Rational minHitE, Rational maxHitE, Rational robotMass, Rational ballMass) 
+	Simulator(const model::Rules& rules, Rational minHitE, Rational maxHitE, Rational robotMass, Rational ballMass, Rational ballArenaE, Rational maxEntitySpeed, Rational gravity, Rational maxRobotGroundSpeed, int rngSeed) 
 		: m_minHitE(minHitE)
 		, m_maxHitE(maxHitE)
 		, m_robotMass(robotMass)
 		, m_ballMass(ballMass)
         , m_rules(rules)
+        , m_ballArenaE(ballArenaE)
+        , m_maxEntitySpeed(maxEntitySpeed)
+        , m_gravity(gravity)
+        , m_maxRobotGroundSpeed(maxRobotGroundSpeed)
+        , m_rng(rngSeed)
 	{
 		testCollide();
 	}
