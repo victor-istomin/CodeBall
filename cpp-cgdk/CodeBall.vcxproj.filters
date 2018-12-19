@@ -221,5 +221,8 @@
     <ClInclude Include="Simulator.h">
       <Filter>Header Files\Strategy</Filter>
     </ClInclude>
+    <ClInclude Include="defines.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
