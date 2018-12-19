@@ -144,6 +144,7 @@
       <ConformanceMode Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ConformanceMode>
     </ClCompile>
     <ClCompile Include="Strategy.cpp" />
+    <ClCompile Include="Tests.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="csimplesocket\ActiveSocket.h" />
@@ -203,6 +204,7 @@
     <ClInclude Include="Runner.h" />
     <ClInclude Include="Simulator.h" />
     <ClInclude Include="Strategy.h" />
+    <ClInclude Include="Tests.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
