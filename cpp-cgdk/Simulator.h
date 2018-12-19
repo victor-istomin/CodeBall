@@ -3,7 +3,6 @@
 #undef max
 #include "Entity.h"
 #include "model/Rules.h"
-#include "defines.h"
 
 #include <algorithm>
 #include <optional>
@@ -36,10 +35,10 @@ private:
     const model::Rules m_rules;
     std::mt19937       m_rng;
 
-	template <typename Unit> auto getMass(const Unit&)   -> std::enable_if_t<std::is_base_of_v<model::Robot, Unit>, Rational> { return ROBOT_MASS; }
-	template <typename Unit> auto getMass(const Unit&)   -> std::enable_if_t<std::is_base_of_v<model::Ball,  Unit>, Rational> { return BALL_MASS; }
+	template <typename Unit> auto getMass(const Unit&)   -> std::enable_if_t<std::is_base_of_v<model::Robot, Unit>, Rational> { return m_rules.ROBOT_MASS; }
+	template <typename Unit> auto getMass(const Unit&)   -> std::enable_if_t<std::is_base_of_v<model::Ball,  Unit>, Rational> { return m_rules.BALL_MASS; }
     template <typename Unit> auto getArenaE(const Unit&) -> std::enable_if_t<!std::is_base_of_v<model::Ball, Unit>, Rational> { return 0; }
-    template <typename Unit> auto getArenaE(const Unit&) -> std::enable_if_t< std::is_base_of_v<model::Ball, Unit>, Rational> { return BALL_ARENA_E; }
+    template <typename Unit> auto getArenaE(const Unit&) -> std::enable_if_t< std::is_base_of_v<model::Ball, Unit>, Rational> { return m_rules.BALL_ARENA_E; }
 
 	struct Dan     // just following SDK naming, Distance And Normal
 	{
@@ -326,12 +325,12 @@ private:
     template <typename EntityType>
     void move(EntityType& e, Rational delta_time)
     {
-        e.setVelocity(clamp(e.velocity(), MAX_ENTITY_SPEED));
+        e.setVelocity(clamp(e.velocity(), m_rules.MAX_ENTITY_SPEED));
         e.setPosition(e.position() + e.velocity() * delta_time);
 
         // separate step for gravity
-        e.y          -= GRAVITY * delta_time * delta_time / 2;
-        e.velocity_y -= GRAVITY * delta_time;
+        e.y          -= m_rules.GRAVITY * delta_time * delta_time / 2;
+        e.velocity_y -= m_rules.GRAVITY * delta_time;
     }
 
 	template <typename LeftEntity, typename RightEntity>
@@ -357,7 +356,7 @@ private:
 
 			if(delta_v < 0)   // #todo - why < 0?
 			{
-				Vec3d impulse = (1 + random(MIN_HIT_E, MAX_HIT_E)) * delta_v * normal;
+				Vec3d impulse = (1 + random(m_rules.MIN_HIT_E, m_rules.MAX_HIT_E)) * delta_v * normal;
 				a.setVelocity(a.velocity() + impulse * k_a);
 				b.setVelocity(b.velocity() - impulse * k_b);
 			}
@@ -367,9 +366,9 @@ private:
 
 public:
 
-	Simulator(const model::Rules& rules, int rngSeed) 
+	Simulator(const model::Rules& rules) 
         : m_rules(rules)
-        , m_rng(rngSeed)
+        , m_rng(static_cast<int>(rules.seed))
 	{
 		testCollide();
 	}
@@ -387,14 +386,14 @@ public:
 		{
 			if(robot.touch)   // #todo - check whether it's set in Sim
 			{
-				Vec3d target_velocity = clamp(robot.actionTargetVelocity(), ROBOT_MAX_GROUND_SPEED);
+				Vec3d target_velocity = clamp(robot.actionTargetVelocity(), m_rules.ROBOT_MAX_GROUND_SPEED);
 				Rational ground_projection = linalg::dot(robot.touchNormal(), target_velocity);
 				target_velocity = target_velocity - robot.touchNormal() * ground_projection;
 				Vec3d target_velocity_change = target_velocity - robot.velocity();
 
 				if(linalg::length(target_velocity_change) > 0)
 				{
-					Rational acceleration = ROBOT_ACCELERATION * std::max(0.0, robot.touch_normal_y);
+					Rational acceleration = m_rules.ROBOT_ACCELERATION * std::max(0.0, robot.touch_normal_y);
 					robot.setVelocity(robot.velocity()
 						+ clamp(
 							linalg::normalize(target_velocity_change) * acceleration * delta_time,
@@ -405,20 +404,20 @@ public:
 			if(robot.action().use_nitro)
 			{
 				Vec3d target_velocity_change = clamp(robot.actionTargetVelocity() - robot.velocity(),
-					robot.nitro_amount * NITRO_POINT_VELOCITY_CHANGE);
+					robot.nitro_amount * m_rules.NITRO_POINT_VELOCITY_CHANGE);
 
 				if(linalg::length(target_velocity_change) > 0)
 				{
-					Vec3d acceleration = linalg::normalize(target_velocity_change) * ROBOT_NITRO_ACCELERATION;
+					Vec3d acceleration = linalg::normalize(target_velocity_change) * m_rules.ROBOT_NITRO_ACCELERATION;
 					Vec3d velocity_change = clamp(acceleration * delta_time, linalg::length(target_velocity_change));
 
 					robot.setVelocity(robot.velocity() + velocity_change);
-					robot.nitro_amount -= linalg::length(velocity_change) / NITRO_POINT_VELOCITY_CHANGE;
+					robot.nitro_amount -= linalg::length(velocity_change) / m_rules.NITRO_POINT_VELOCITY_CHANGE;
 				}
 			}
 
 			move(robot, delta_time);
-			robot.radius = ROBOT_MIN_RADIUS + (ROBOT_MAX_RADIUS - ROBOT_MIN_RADIUS) * robot.action().jump_speed / ROBOT_MAX_JUMP_SPEED;
+			robot.radius = m_rules.ROBOT_MIN_RADIUS + (m_rules.ROBOT_MAX_RADIUS - m_rules.ROBOT_MIN_RADIUS) * robot.action().jump_speed / m_rules.ROBOT_MAX_JUMP_SPEED;
 			robot.setRadiusChangeSpeed(robot.action().jump_speed);
 		}
 

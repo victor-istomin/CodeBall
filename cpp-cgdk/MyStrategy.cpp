@@ -31,7 +31,7 @@ MyStrategy::MyStrategy()
 void MyStrategy::act(const Robot& me, const Rules& rules, const Game& game, Action& action)
 {
     if(!m_simulator)
-        m_simulator = std::make_unique<Simulator>(rules, 1);
+        m_simulator = std::make_unique<Simulator>(rules);
 
 	if(me.id != 1)
 	{
@@ -51,8 +51,8 @@ void MyStrategy::act(const Robot& me, const Rules& rules, const Game& game, Acti
 	
 	robot.setAction(action);
 
-	constexpr double tickTime      = 1 / TICKS_PER_SECOND;
-	constexpr double microtickTime = tickTime / MICROTICKS_PER_TICK;
+	const double tickTime      = 1 / rules.TICKS_PER_SECOND;
+	const double microtickTime = tickTime / rules.MICROTICKS_PER_TICK;
 
 	if(game.current_tick == 0)
 	{
@@ -73,7 +73,7 @@ void MyStrategy::act(const Robot& me, const Rules& rules, const Game& game, Acti
 
 	if(game.current_tick == 10)
 	{ 
-		action.jump_speed = ROBOT_MAX_JUMP_SPEED;
+		action.jump_speed = rules.ROBOT_MAX_JUMP_SPEED;
 		action.target_velocity_x = me.velocity_x;
 		robot.setAction(action);
 
@@ -86,7 +86,7 @@ void MyStrategy::act(const Robot& me, const Rules& rules, const Game& game, Acti
 		auto start = std::chrono::high_resolution_clock::now();
 		for(int tick = 10; tick < 300; ++tick)
 		{
-			for(int i = 0; i < MICROTICKS_PER_TICK; ++i)
+			for(int i = 0; i < rules.MICROTICKS_PER_TICK; ++i)
 				m_simulator->update(robots, ball, microtickTime);
 			
 			robots.front().action().jump_speed = 0;    // reset jump flag
