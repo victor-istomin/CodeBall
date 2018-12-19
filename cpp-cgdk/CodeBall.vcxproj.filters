@@ -13,6 +13,12 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
     </Filter>
+    <Filter Include="Header Files\Utils">
+      <UniqueIdentifier>{711cf217-9791-4aa8-b645-e63ae7f1b72a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Strategy">
+      <UniqueIdentifier>{b52ae1af-61e3-4276-ae6c-3841ab9fc786}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MyStrategy.cpp">
@@ -44,176 +50,176 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="MyStrategy.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="RemoteProcessClient.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Runner.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Strategy.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="model\Action.h">
+      <Filter>Header Files\Utils</Filter>
     </ClInclude>
     <ClInclude Include="csimplesocket\ActiveSocket.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="csimplesocket\Host.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="csimplesocket\HTTPActiveSocket.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="csimplesocket\PassiveSocket.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="csimplesocket\SimpleSocket.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="csimplesocket\StatTimer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="model\Action.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="model\Arena.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="model\Ball.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="model\Game.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="model\NitroPack.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="model\Player.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="model\Robot.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="model\Rules.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Utils</Filter>
     </ClInclude>
     <ClInclude Include="rapidjson\allocators.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Utils</Filter>
     </ClInclude>
-    <ClInclude Include="rapidjson\cursorstreamwrapper.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="model\Arena.h">
+      <Filter>Header Files\Utils</Filter>
     </ClInclude>
-    <ClInclude Include="rapidjson\document.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="rapidjson\encodedstream.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="rapidjson\encodings.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="rapidjson\filereadstream.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="rapidjson\filewritestream.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="rapidjson\fwd.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="rapidjson\istreamwrapper.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="rapidjson\memorybuffer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="rapidjson\memorystream.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="rapidjson\ostreamwrapper.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="rapidjson\pointer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="rapidjson\prettywriter.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="rapidjson\rapidjson.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="rapidjson\reader.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="rapidjson\schema.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="rapidjson\stream.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="rapidjson\stringbuffer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="rapidjson\writer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="rapidjson\error\en.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="rapidjson\error\error.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="model\Ball.h">
+      <Filter>Header Files\Utils</Filter>
     </ClInclude>
     <ClInclude Include="rapidjson\internal\biginteger.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="rapidjson\cursorstreamwrapper.h">
+      <Filter>Header Files\Utils</Filter>
     </ClInclude>
     <ClInclude Include="rapidjson\internal\diyfp.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="rapidjson\document.h">
+      <Filter>Header Files\Utils</Filter>
     </ClInclude>
     <ClInclude Include="rapidjson\internal\dtoa.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Utils</Filter>
     </ClInclude>
-    <ClInclude Include="rapidjson\internal\ieee754.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="rapidjson\error\en.h">
+      <Filter>Header Files\Utils</Filter>
     </ClInclude>
-    <ClInclude Include="rapidjson\internal\itoa.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="rapidjson\encodedstream.h">
+      <Filter>Header Files\Utils</Filter>
     </ClInclude>
-    <ClInclude Include="rapidjson\internal\meta.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="rapidjson\internal\pow10.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="rapidjson\internal\regex.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="rapidjson\internal\stack.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="rapidjson\internal\strfunc.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="rapidjson\internal\strtod.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="rapidjson\internal\swap.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="rapidjson\msinttypes\inttypes.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="rapidjson\msinttypes\stdint.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="rapidjson\encodings.h">
+      <Filter>Header Files\Utils</Filter>
     </ClInclude>
     <ClInclude Include="Entity.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="rapidjson\error\error.h">
+      <Filter>Header Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="rapidjson\filereadstream.h">
+      <Filter>Header Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="rapidjson\filewritestream.h">
+      <Filter>Header Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="rapidjson\fwd.h">
+      <Filter>Header Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="model\Game.h">
+      <Filter>Header Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="csimplesocket\Host.h">
+      <Filter>Header Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="csimplesocket\HTTPActiveSocket.h">
+      <Filter>Header Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="rapidjson\internal\ieee754.h">
+      <Filter>Header Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="rapidjson\msinttypes\inttypes.h">
+      <Filter>Header Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="rapidjson\istreamwrapper.h">
+      <Filter>Header Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="rapidjson\internal\itoa.h">
+      <Filter>Header Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="rapidjson\memorybuffer.h">
+      <Filter>Header Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="rapidjson\memorystream.h">
+      <Filter>Header Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="rapidjson\internal\meta.h">
+      <Filter>Header Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="model\NitroPack.h">
+      <Filter>Header Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="rapidjson\ostreamwrapper.h">
+      <Filter>Header Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="csimplesocket\PassiveSocket.h">
+      <Filter>Header Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="model\Player.h">
+      <Filter>Header Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="rapidjson\pointer.h">
+      <Filter>Header Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="rapidjson\internal\pow10.h">
+      <Filter>Header Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="rapidjson\prettywriter.h">
+      <Filter>Header Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="rapidjson\rapidjson.h">
+      <Filter>Header Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="rapidjson\reader.h">
+      <Filter>Header Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="rapidjson\internal\regex.h">
+      <Filter>Header Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="RemoteProcessClient.h">
+      <Filter>Header Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="model\Robot.h">
+      <Filter>Header Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="model\Rules.h">
+      <Filter>Header Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="Runner.h">
+      <Filter>Header Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="rapidjson\schema.h">
+      <Filter>Header Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="csimplesocket\SimpleSocket.h">
+      <Filter>Header Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="rapidjson\internal\stack.h">
+      <Filter>Header Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="csimplesocket\StatTimer.h">
+      <Filter>Header Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="rapidjson\msinttypes\stdint.h">
+      <Filter>Header Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="Strategy.h">
+      <Filter>Header Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="rapidjson\stream.h">
+      <Filter>Header Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="rapidjson\internal\strfunc.h">
+      <Filter>Header Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="rapidjson\stringbuffer.h">
+      <Filter>Header Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="rapidjson\internal\strtod.h">
+      <Filter>Header Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="rapidjson\internal\swap.h">
+      <Filter>Header Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="rapidjson\writer.h">
+      <Filter>Header Files\Utils</Filter>
     </ClInclude>
     <ClInclude Include="linalg.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Strategy</Filter>
+    </ClInclude>
+    <ClInclude Include="MyStrategy.h">
+      <Filter>Header Files\Strategy</Filter>
     </ClInclude>
     <ClInclude Include="Simulator.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Strategy</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
