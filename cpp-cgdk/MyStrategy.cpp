@@ -2,10 +2,12 @@
 
 using namespace model;
 
-MyStrategy::MyStrategy() { }
+MyStrategy::MyStrategy() 
+{
+}
 
-void MyStrategy::act(const Robot& me, const Rules& rules, const Game& game, Action& action)
+void MyStrategy::act(const Robot&, const Rules& rules, const Game&, Action&)
 {
     if(!m_simulator)
-        m_simulator = std::make_unique<Simulator>(rules, MIN_HIT_E, MAX_HIT_E, ROBOT_MASS, BALL_MASS, BALL_ARENA_E, MAX_ENTITY_SPEED, GRAVITY, 1);
+        m_simulator = std::make_unique<Simulator>(rules, 1);
 }

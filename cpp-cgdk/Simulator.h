@@ -32,21 +32,13 @@ public:
 	using Rational = double;
 
 private:
-	const Rational     m_minHitE;
-	const Rational     m_maxHitE;
-	const Rational     m_robotMass;
-	const Rational     m_ballMass;
-    const Rational     m_ballArenaE;
-    const Rational     m_maxEntitySpeed;
-    const Rational     m_gravity;
-    const Rational     m_maxRobotGroundSpeed;
     const model::Rules m_rules;
     std::mt19937       m_rng;
 
-	template <typename Unit> auto getMass(const Unit& u) -> std::enable_if_t<std::is_base_of_v<model::Robot, Unit>, Rational> { return m_robotMass; }
-	template <typename Unit> auto getMass(const Unit& u) -> std::enable_if_t<std::is_base_of_v<model::Ball,  Unit>, Rational> { return m_ballMass; }
-    template <typename Unit> auto getArenaE(const Unit& u) -> std::enable_if_t<!std::is_base_of_v<model::Ball, Unit>, Rational> { return 0; }
-    template <typename Unit> auto getArenaE(const Unit& u) -> std::enable_if_t< std::is_base_of_v<model::Ball, Unit>, Rational> { return m_ballArenaE; }
+	template <typename Unit> auto getMass(const Unit&)   -> std::enable_if_t<std::is_base_of_v<model::Robot, Unit>, Rational> { return ROBOT_MASS; }
+	template <typename Unit> auto getMass(const Unit&)   -> std::enable_if_t<std::is_base_of_v<model::Ball,  Unit>, Rational> { return BALL_MASS; }
+    template <typename Unit> auto getArenaE(const Unit&) -> std::enable_if_t<!std::is_base_of_v<model::Ball, Unit>, Rational> { return 0; }
+    template <typename Unit> auto getArenaE(const Unit&) -> std::enable_if_t< std::is_base_of_v<model::Ball, Unit>, Rational> { return BALL_ARENA_E; }
 
 	struct Dan     // just following SDK naming, Distance And Normal
 	{
@@ -108,10 +100,10 @@ private:
         Vec2d arenaSqGate = { (arena.goal_width / 2) - arena.goal_top_radius, arena.goal_height - arena.goal_top_radius };
 
         // side Z (non-goal)
-        Vec2d v /*name in SDK*/ = pointXY - arenaSqGate;
+        Vec2d vz /*name in SDK*/ = pointXY - arenaSqGate;
         if(    (pointXY.x >= (arena.goal_width / 2) + arena.goal_side_radius)
             || (pointXY.y >= arena.goal_height + arena.goal_side_radius)
-            || (v.x > 0 && v.y > 0 && length(v) >= arena.goal_top_radius + arena.goal_side_radius))
+            || (vz.x > 0 && vz.y > 0 && linalg::length(vz) >= arena.goal_top_radius + arena.goal_side_radius))
         {
             dan = std::min(dan, dan_to_plane(point, sideZ));
         }
@@ -333,23 +325,28 @@ private:
     template <typename EntityType>
     void move(EntityType& e, Rational delta_time)
     {
-        e.setVelocity(clamp(e.velocity(), m_maxEntitySpeed));
+        e.setVelocity(clamp(e.velocity(), MAX_ENTITY_SPEED));
         e.setPosition(e.position() + e.velocity() * delta_time);
 
         // separate step for gravity
-        e.y          -= m_gravity * delta_time * delta_time / 2;
-        e.velocity_y -= m_gravity * delta_time;
+        e.y          -= GRAVITY * delta_time * delta_time / 2;
+        e.velocity_y -= GRAVITY * delta_time;
     }
 
     void update(std::vector<Entity<model::Robot>>& robots, Entity<model::Ball>& ball, Rational delta_time)
     {
-        std::shuffle(robots.begin(), robots.end(), m_rng);
+		// #todo - avoid 'new'
+		std::vector<Entity<model::Robot>*> robotPointers;
+		robotPointers.reserve(robots.size());
+
+		std::transform(robots.begin(), robots.end(), std::back_inserter(robotPointers), [](Entity<model::Robot>& r) { return &r; });
+        std::shuffle(robotPointers.begin(), robotPointers.end(), m_rng);
 
         for(Entity<model::Robot>& robot : robots)
         {
             if(robot.touch)   // #todo - check whether it's set in Sim
             {
-                Vec3d target_velocity = clamp(robot.actionTargetVelocity(), m_maxRobotGroundSpeed);
+                Vec3d target_velocity = clamp(robot.actionTargetVelocity(), ROBOT_MAX_GROUND_SPEED);
                 Rational ground_projection = linalg::dot(robot.touchNormal(), target_velocity);
                 Vec3d tmp = robot.touchNormal() * ground_projection;   // #WTF?
                 target_velocity = target_velocity - tmp;
@@ -419,16 +416,8 @@ private:
 
 public:
 
-	Simulator(const model::Rules& rules, Rational minHitE, Rational maxHitE, Rational robotMass, Rational ballMass, Rational ballArenaE, Rational maxEntitySpeed, Rational gravity, Rational maxRobotGroundSpeed, int rngSeed) 
-		: m_minHitE(minHitE)
-		, m_maxHitE(maxHitE)
-		, m_robotMass(robotMass)
-		, m_ballMass(ballMass)
-        , m_rules(rules)
-        , m_ballArenaE(ballArenaE)
-        , m_maxEntitySpeed(maxEntitySpeed)
-        , m_gravity(gravity)
-        , m_maxRobotGroundSpeed(maxRobotGroundSpeed)
+	Simulator(const model::Rules& rules, int rngSeed) 
+        : m_rules(rules)
         , m_rng(rngSeed)
 	{
 		testCollide();
@@ -459,7 +448,7 @@ public:
 
 			if(delta_v < 0)   // #todo - why < 0?
 			{
-				Vec3d impulse = (1 + random(m_minHitE, m_maxHitE)) * delta_v * normal;
+				Vec3d impulse = (1 + random(MIN_HIT_E, MAX_HIT_E)) * delta_v * normal;
 				a.setVelocity(a.velocity() + impulse * k_a);
 				b.setVelocity(b.velocity() - impulse * k_b);
 			}
