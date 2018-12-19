@@ -25,19 +25,26 @@ public:
 	Entity(const Entity&) = default;
 	Entity(Entity&&)      = default;
 
-	Entity(Type&& copy) : Entity()        { *this = std::forward<Type&&>(copy); }
-	Entity<Type>& operator=(Type&& copy)  { static_cast<Type&>(*this) = std::forward<Type&&>(copy); return *this; }
+	Entity(const Type& copy) : Entity()       { *this = copy; }
+	Entity(Type&& copy) : Entity()            { *this = std::forward<Type&&>(copy); }
+	Entity<Type>& operator=(Type&& copy)      { static_cast<Type&>(*this) = std::forward<Type&&>(copy); return *this; }
+	Entity<Type>& operator=(const Type& copy) { static_cast<Type&>(*this) = copy; return *this; }
 
-	Vec3d position()    const             { return Vec3d { x, y, z }; }
-	Vec3d velocity()    const             { return Vec3d { velocity_x, velocity_y, velocity_z }; }
-    Rational radiusChangeSpeed() const    { return m_radiusChangeSpeed; }
+	Vec3d position()    const                 { return Vec3d { x, y, z }; }
+	Vec3d velocity()    const                 { return Vec3d { velocity_x, velocity_y, velocity_z }; }
+    Rational radiusChangeSpeed() const        { return m_radiusChangeSpeed; }
 
-	void setPosition(Vec3d&& v)           { x = v.x; y = v.y; z = v.z; }
-	void setVelocity(Vec3d&& v)           { velocity_x = v.x; velocity_y = v.y; velocity_z = v.z; }
-    void setRadiusChangeSpeed(Rational s) { m_radiusChangeSpeed = s; }
+	void setPosition(Vec3d&& v)               { x = v.x; y = v.y; z = v.z; }
+	void setVelocity(Vec3d&& v)               { velocity_x = v.x; velocity_y = v.y; velocity_z = v.z; }
+    void setRadiusChangeSpeed(Rational s)     { m_radiusChangeSpeed = s; }
 
-    const model::Action& action() const  { return m_action; }
-    Vec3d actionTargetVelocity() const   { return Vec3d{ m_action.target_velocity_x, m_action.target_velocity_y, m_action.target_velocity_z }; }
+	const model::Action& action() const       { return m_action; }
+    model::Action& action()                   { return m_action; }
+    Vec3d actionTargetVelocity() const        { return Vec3d{ m_action.target_velocity_x, m_action.target_velocity_y, m_action.target_velocity_z }; }
+	void setAction(const model::Action& a)    { m_action = a; }
+
+	template <typename S = Type> auto getId() const -> std::enable_if_t< std::is_same_v<S, model::Robot>, Rational> { return (int)this->id; }
+	template <typename S = Type> auto getId() const -> std::enable_if_t<!std::is_same_v<S, model::Robot>, Rational> { return (int)-1; }
 
 	template <typename S = Type> auto radiusChangeSpeed()                  const -> std::enable_if_t< std::is_same_v<S, model::Robot>, Rational>{ return m_radiusChangeSpeed; }
 	template <typename S = Type> auto radiusChangeSpeed()                  const -> std::enable_if_t<!std::is_same_v<S, model::Robot>, Rational>{ return 0; }

@@ -30,6 +30,7 @@ class Simulator
 public:
 	using Vec3d = linalg::vec<double, 3>;
 	using Rational = double;
+	constexpr static Rational Epsilon = 1e-6;
 
 private:
     const model::Rules m_rules;
@@ -124,7 +125,7 @@ private:
         {
             const Sphere bottomHorizontal = {
                 Vec3d{ std::clamp(point.x,
-                                  arena.bottom_radius - (arena.goal_width / 2),
+                                  arena.bottom_radius - (arena.goal_width / 2),      // actually, might use 0, because point.x is always positive
                                   (arena.goal_width / 2) - arena.bottom_radius),
                        std::clamp(point.y,
                                   arena.bottom_radius,
@@ -333,103 +334,11 @@ private:
         e.velocity_y -= GRAVITY * delta_time;
     }
 
-    void update(std::vector<Entity<model::Robot>>& robots, Entity<model::Ball>& ball, Rational delta_time)
-    {
-		// #todo - avoid 'new'
-		std::vector<Entity<model::Robot>*> robotPointers;
-		robotPointers.reserve(robots.size());
-
-		std::transform(robots.begin(), robots.end(), std::back_inserter(robotPointers), [](Entity<model::Robot>& r) { return &r; });
-        std::shuffle(robotPointers.begin(), robotPointers.end(), m_rng);
-
-        for(Entity<model::Robot>& robot : robots)
-        {
-            if(robot.touch)   // #todo - check whether it's set in Sim
-            {
-                Vec3d target_velocity = clamp(robot.actionTargetVelocity(), ROBOT_MAX_GROUND_SPEED);
-                Rational ground_projection = linalg::dot(robot.touchNormal(), target_velocity);
-                Vec3d tmp = robot.touchNormal() * ground_projection;   // #WTF?
-                target_velocity = target_velocity - tmp;
-                Vec3d target_velocity_change = target_velocity - robot.velocity();
-
-                if(linalg::length(target_velocity_change) > 0)
-                {
-                    Rational acceleration = ROBOT_ACCELERATION * std::max(0.0, robot.touch_normal_y);
-                    robot.setVelocity(robot.velocity()
-                                       + clamp(
-                                           linalg::normalize(target_velocity_change) * acceleration * delta_time,
-                                           length(target_velocity_change)));
-                }
-            }
-
-            if(robot.action().use_nitro)
-            {
-                Vec3d target_velocity_change = clamp(robot.actionTargetVelocity() - robot.velocity(),
-                                                     robot.nitro_amount * NITRO_POINT_VELOCITY_CHANGE);
-
-                if(linalg::length(target_velocity_change) > 0)
-                {
-                    Vec3d acceleration = linalg::normalize(target_velocity_change) * ROBOT_NITRO_ACCELERATION;
-                    Vec3d velocity_change = clamp(acceleration * delta_time, linalg::length(target_velocity_change));
-
-                    robot.setVelocity(robot.velocity() + velocity_change);
-                    robot.nitro_amount -= linalg::length(velocity_change) / NITRO_POINT_VELOCITY_CHANGE;
-                }
-            }
-
-            move(robot, delta_time);
-            robot.radius = ROBOT_MIN_RADIUS + (ROBOT_MAX_RADIUS - ROBOT_MIN_RADIUS) * robot.action().jump_speed / ROBOT_MAX_JUMP_SPEED;
-            robot.setRadiusChangeSpeed(robot.action().jump_speed);
-        }
-
-        move(ball, delta_time);
-
-        for(int i = 0; i < (int)robots.size(); ++i)
-            for(int j = 0; j < i - 1; ++j)
-                collide_entities(robots[i], robots[j]);
-
-        for(Entity<model::Robot>& robot : robots)
-        {
-            collide_entities(robot, ball);
-
-            std::optional<Vec3d> collisionNormal = collide_with_arena(robot);
-            if(collisionNormal.has_value())
-            {
-                robot.touch = true;
-                robot.setTouchNormal(*collisionNormal);
-            }
-            else
-            {
-                robot.touch = false;
-            }
-        }
-
-        collide_with_arena(ball);
-
-        // #todo - goal callback
-        // if (abs(ball.position.z) > arena.depth / 2 + ball.radius)
-        //     goal_scored();
-
-        // #todo - nitro packs
-    }
-
-
-public:
-
-	Simulator(const model::Rules& rules, int rngSeed) 
-        : m_rules(rules)
-        , m_rng(rngSeed)
-	{
-		testCollide();
-	}
-
-	Rational random(double min, double max) { return (min + max) / 2; }  // #todo - random
-
 	template <typename LeftEntity, typename RightEntity>
 	void collide_entities(LeftEntity& a, RightEntity& b)
 	{
-		Vec3d    delta_pos   = b.position() - a.position();
-		Rational distance    = linalg::length(delta_pos);
+		Vec3d    delta_pos = b.position() - a.position();
+		Rational distance = linalg::length(delta_pos);
 		Rational penetration = a.radius + b.radius - distance;
 
 		if(penetration > 0)
@@ -455,10 +364,101 @@ public:
 		}
 	}
 
+
+public:
+
+	Simulator(const model::Rules& rules, int rngSeed) 
+        : m_rules(rules)
+        , m_rng(rngSeed)
+	{
+		testCollide();
+	}
+
+	void update(std::vector<Entity<model::Robot>>& robots, Entity<model::Ball>& ball, Rational delta_time)
+	{
+		// #todo - avoid 'new'
+		std::vector<Entity<model::Robot>*> robotPointers;
+		robotPointers.reserve(robots.size());
+
+		std::transform(robots.begin(), robots.end(), std::back_inserter(robotPointers), [](Entity<model::Robot>& r) { return &r; });
+		std::shuffle(robotPointers.begin(), robotPointers.end(), m_rng);
+
+		for(Entity<model::Robot>& robot : robots)
+		{
+			if(robot.touch)   // #todo - check whether it's set in Sim
+			{
+				Vec3d target_velocity = clamp(robot.actionTargetVelocity(), ROBOT_MAX_GROUND_SPEED);
+				Rational ground_projection = linalg::dot(robot.touchNormal(), target_velocity);
+				target_velocity = target_velocity - robot.touchNormal() * ground_projection;
+				Vec3d target_velocity_change = target_velocity - robot.velocity();
+
+				if(linalg::length(target_velocity_change) > 0)
+				{
+					Rational acceleration = ROBOT_ACCELERATION * std::max(0.0, robot.touch_normal_y);
+					robot.setVelocity(robot.velocity()
+						+ clamp(
+							linalg::normalize(target_velocity_change) * acceleration * delta_time,
+							length(target_velocity_change)));
+				}
+			}
+
+			if(robot.action().use_nitro)
+			{
+				Vec3d target_velocity_change = clamp(robot.actionTargetVelocity() - robot.velocity(),
+					robot.nitro_amount * NITRO_POINT_VELOCITY_CHANGE);
+
+				if(linalg::length(target_velocity_change) > 0)
+				{
+					Vec3d acceleration = linalg::normalize(target_velocity_change) * ROBOT_NITRO_ACCELERATION;
+					Vec3d velocity_change = clamp(acceleration * delta_time, linalg::length(target_velocity_change));
+
+					robot.setVelocity(robot.velocity() + velocity_change);
+					robot.nitro_amount -= linalg::length(velocity_change) / NITRO_POINT_VELOCITY_CHANGE;
+				}
+			}
+
+			move(robot, delta_time);
+			robot.radius = ROBOT_MIN_RADIUS + (ROBOT_MAX_RADIUS - ROBOT_MIN_RADIUS) * robot.action().jump_speed / ROBOT_MAX_JUMP_SPEED;
+			robot.setRadiusChangeSpeed(robot.action().jump_speed);
+		}
+
+		move(ball, delta_time);
+
+		for(int i = 0; i < (int)robots.size(); ++i)
+			for(int j = 0; j < i - 1; ++j)
+				collide_entities(robots[i], robots[j]);
+
+		for(Entity<model::Robot>& robot : robots)
+		{
+			collide_entities(robot, ball);
+
+			std::optional<Vec3d> collisionNormal = collide_with_arena(robot);
+			if(collisionNormal.has_value())
+			{
+				robot.touch = true;
+				robot.setTouchNormal(*collisionNormal);
+			}
+			else
+			{
+				robot.touch = false;
+			}
+		}
+
+		collide_with_arena(ball);
+
+		// #todo - goal callback
+		// if (abs(ball.position.z) > arena.depth / 2 + ball.radius)
+		//     goal_scored();
+
+		// #todo - nitro packs
+	}
+
+
+	Rational random(double min, double max) { return (min + max) / 2; }  // #todo - random
+
+
 	void testCollide()
 	{
-		constexpr double Epsilon = 0.0000001;
-
 		Entity<model::Robot> r = model::Robot {
 			0, // int    id;
 			0, // int    player_id;
