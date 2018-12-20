@@ -27,6 +27,9 @@ void MyStrategy::act(const Robot& me, const Rules& rules, const Game& game, Acti
     if(!m_qsGuy)
         m_qsGuy = std::make_unique<QuickStart_MyStrategy>();
 
+    if(0 != (me.id % 2))
+        return;
+
 //     m_qsGuy->act(me, rules, game, action);
 //     return;
     
@@ -80,19 +83,20 @@ void MyStrategy::act(const Robot& me, const Rules& rules, const Game& game, Acti
     {
         Action nextAction;
 
-        using PointXZ = linalg::vec<double, 2>;
-        PointXZ ballXZ     = { simBall.x, simBall.z };
-        PointXZ attackerXZ = { simAttacker.x, simAttacker.z };
-        PointXZ displacementXZ = ballXZ - attackerXZ;
+//         using PointXZ = linalg::vec<double, 2>;
+//         PointXZ ballXZ     = { simBall.x, simBall.z };
+//         PointXZ attackerXZ = { simAttacker.x, simAttacker.z };
+//         PointXZ displacementXZ = ballXZ - attackerXZ;
+// 
+//         nextAction.target_velocity_x = displacementXZ[0];
+//         nextAction.target_velocity_y = 0;
+//         nextAction.target_velocity_z = displacementXZ[1];
+// 
+//         double distanceSqare = linalg::length2(simAttacker.position() - simBall.position());
+//         if(distanceSqare < attackDistanceSquare && simAttacker.y < simBall.y)
+//             nextAction.jump_speed = rules.ROBOT_MAX_JUMP_SPEED;
 
-        nextAction.target_velocity_x = displacementXZ[0];
-        nextAction.target_velocity_y = 0;
-        nextAction.target_velocity_z = displacementXZ[1];
-
-        double distanceSqare = linalg::length2(simAttacker.position() - simBall.position());
-        if(distanceSqare < attackDistanceSquare && simAttacker.y < simBall.y)
-            nextAction.jump_speed = rules.ROBOT_MAX_JUMP_SPEED;
-
+        m_qsGuy->attackerAction(simAttacker, simBall, rules, nextAction);
         simAttacker.setAction(nextAction);
 
         for(int microtick = 0; microtick < rules.MICROTICKS_PER_TICK; ++microtick)
@@ -104,6 +108,7 @@ void MyStrategy::act(const Robot& me, const Rules& rules, const Game& game, Acti
             hit.tick = game.current_tick + i;
             hit.attacker = simAttacker;
             hit.ball     = simBall;
+            break;
         }
     }
 
@@ -116,7 +121,7 @@ void MyStrategy::act(const Robot& me, const Rules& rules, const Game& game, Acti
     if(hit.tick != 0)
     {
         logFile << "t: " << game.current_tick << "; enemy hit t: " << hit.tick
-            << "enemy: ";
+            << "; enemy: ";
 
         outPos(logFile, hit.attacker);
         logFile << "; ball: ";
@@ -124,7 +129,7 @@ void MyStrategy::act(const Robot& me, const Rules& rules, const Game& game, Acti
         logFile << std::endl;
     }
 
-    logFile << "actual attacker: ";
+    logFile << "t: " << game.current_tick << "; actual attacker: ";
     outPos(logFile, *enemyAttacker);
     logFile << "; actual ball: ";
     outPos(logFile, ball);

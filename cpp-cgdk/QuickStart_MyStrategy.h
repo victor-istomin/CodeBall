@@ -52,12 +52,11 @@ class QuickStart_MyStrategy : public Strategy
 
 public:
 
-    Point3D ball;
-    Point3D ball_v;
-
     QuickStart_MyStrategy();
 
     void act(const model::Robot& me, const model::Rules& rules, const model::Game& world, model::Action& action) override;
+
+    bool attackerAction(const model::Robot& me, const model::Ball& ballUnit, const model::Rules& rules, model::Action& action);
 
 };
 
