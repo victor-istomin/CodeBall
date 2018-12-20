@@ -51,6 +51,9 @@
     <ClCompile Include="Tests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="QuickStart_MyStrategy.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="model\Action.h">
@@ -226,6 +229,9 @@
     </ClInclude>
     <ClInclude Include="Tests.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="QuickStart_MyStrategy.h">
+      <Filter>Header Files\Strategy</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

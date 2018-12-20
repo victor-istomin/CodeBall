@@ -9,9 +9,12 @@
 #include "Simulator.h"
 #include <memory>
 
+class QuickStart_MyStrategy;
+
 class MyStrategy : public Strategy 
 {
     std::unique_ptr<Simulator> m_simulator;
+    std::unique_ptr<QuickStart_MyStrategy> m_qsGuy;   // might be used for simulation
 
 public:
     MyStrategy();

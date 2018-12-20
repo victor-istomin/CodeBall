@@ -132,6 +132,7 @@
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Level4</WarningLevel>
       <ConformanceMode Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ConformanceMode>
     </ClCompile>
+    <ClCompile Include="QuickStart_MyStrategy.cpp" />
     <ClCompile Include="RemoteProcessClient.cpp">
       <ConformanceMode Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ConformanceMode>
     </ClCompile>
@@ -164,6 +165,7 @@
     <ClInclude Include="model\Robot.h" />
     <ClInclude Include="model\Rules.h" />
     <ClInclude Include="MyStrategy.h" />
+    <ClInclude Include="QuickStart_MyStrategy.h" />
     <ClInclude Include="rapidjson\allocators.h" />
     <ClInclude Include="rapidjson\cursorstreamwrapper.h" />
     <ClInclude Include="rapidjson\document.h" />

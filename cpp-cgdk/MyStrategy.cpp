@@ -1,4 +1,5 @@
 #include "MyStrategy.h"
+#include "QuickStart_MyStrategy.h"
 #include <chrono>
 #include "tests.h"
 
