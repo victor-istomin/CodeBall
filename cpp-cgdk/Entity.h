@@ -29,13 +29,14 @@ public:
     Entity(Type&& copy) : Entity()            { *this = std::forward<Type&&>(copy); }
     Entity<Type>& operator=(Type&& copy)      { static_cast<Type&>(*this) = std::forward<Type&&>(copy); return *this; }
     Entity<Type>& operator=(const Type& copy) { static_cast<Type&>(*this) = copy; return *this; }
+    Entity& operator=(const Entity& copy) = default;
 
     Vec3d position()    const                 { return Vec3d { x, y, z }; }
     Vec3d velocity()    const                 { return Vec3d { velocity_x, velocity_y, velocity_z }; }
     Rational radiusChangeSpeed() const        { return m_radiusChangeSpeed; }
 
     void setPosition(Vec3d&& v)               { x = v.x; y = v.y; z = v.z; }
-    void setVelocity(Vec3d&& v)               { velocity_x = v.x; velocity_y = v.y; velocity_z = v.z; }
+    void setVelocity(const Vec3d& v)          { velocity_x = v.x; velocity_y = v.y; velocity_z = v.z; }
     void setRadiusChangeSpeed(Rational s)     { m_radiusChangeSpeed = s; }
 
     const model::Action& action() const       { return m_action; }
