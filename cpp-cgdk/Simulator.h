@@ -79,7 +79,7 @@ private:
             Rational velocity = linalg::dot(e.velocity(), dan.normal) - e.radiusChangeSpeed();
             if(velocity < 0)
             {
-                e.setVelocity(e.velocity() - (1 + getArenaE(e)) * velocity * dan.normal);
+                e.setVelocity(e.velocity() - ((1 + getArenaE(e)) * velocity * dan.normal));
                 return dan.normal;
             }
         }
