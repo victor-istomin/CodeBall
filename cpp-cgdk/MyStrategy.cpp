@@ -22,6 +22,11 @@ void MyStrategy::act(const Robot& me, const Rules& rules, const Game& game, Acti
 {
     if(!m_simulator)
         m_simulator = std::make_unique<Simulator>(rules);
+    if(!m_state)
+        m_state = std::make_unique<State>();
+
+    m_state->updateState(me, rules, game, action);
+
 
     if(me.id % 2)
         return;
@@ -50,30 +55,38 @@ void MyStrategy::act(const Robot& me, const Rules& rules, const Game& game, Acti
             r.setAction(action);
     }
 
+    debugRender(simBall, simUntil, game);
+
+    return;
+}
+
+void MyStrategy::debugRender(Entity<model::Ball>& simBall, int simUntil, const model::Game& game)
+{
+#ifdef DEBUG_RENDER
     std::string s = R"(
-[
-  {
-    "Sphere": {
-      "x": %x,
-      "y": %y,
-      "z": %z,
-      "radius": 2,
-      "r": 0.0,
-      "g": 1.0,
-      "b": 1.0,
-      "a": 0.5
-    }
-  },
-  {
-    "Text": "p. tick: %pt, act. tick: %at"
-  },
-  {
-    "Text": "Sphere x: %x, y: %y, z: %z,    p. velocity: %prv"
-  },
-  {
-    "Text": "act. pos: %acp,    act. v: %acv"
-  }
-])";
+    [
+      {
+        "Sphere": {
+          "x": %x,
+          "y": %y,
+          "z": %z,
+          "radius": 2,
+          "r": 0.0,
+          "g": 1.0,
+          "b": 1.0,
+          "a": 0.5
+        }
+      },
+      {
+        "Text": "p. tick: %pt, act. tick: %at"
+      },
+      {
+        "Text": "Sphere x: %x, y: %y, z: %z,    p. velocity: %prv"
+      },
+      {
+        "Text": "act. pos: %acp,    act. v: %acv"
+      }
+    ])";
 
     auto format = [](std::string& s, const std::string& spec, const auto& value)
     {
@@ -86,6 +99,8 @@ void MyStrategy::act(const Robot& me, const Rules& rules, const Game& game, Acti
         }
     };
 
+    using EntityBall = Entity<Ball>;
+
     format(s, "%x", simBall.x);
     format(s, "%y", simBall.y);
     format(s, "%z", simBall.z);
@@ -93,11 +108,12 @@ void MyStrategy::act(const Robot& me, const Rules& rules, const Game& game, Acti
     format(s, "%pt", simUntil);
     format(s, "%at", game.current_tick);
     format(s, "%pr", simBall.velocity());
-    format(s, "%acv", EntityBall(game.ball).velocity());
-    format(s, "%acp", EntityBall(game.ball).position());
+    format(s, "%acv", Entity<model::Ball>(game.ball).velocity());
+    format(s, "%acp", Entity<model::Ball>(game.ball).position());
 
-    m_renderHint = s;
-
-    return;
+    m_renderHint = std::move(s);
+#else    // #ifdef DEBUG_RENDER
+    m_renderHint.clear();
+#endif   // #ifdef DEBUG_RENDER
 }
 
