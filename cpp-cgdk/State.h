@@ -32,6 +32,12 @@ public:
         m_isMoveCommitted = false;
     }
 
+    void commitAction(const model::Action& a) 
+    { 
+        *m_action = a; 
+        m_isMoveCommitted = true;
+    }
+
     bool isMoveCommitted() const { return m_isMoveCommitted; }
 };
 

@@ -43,8 +43,8 @@ public:
     Vec3d actionTargetVelocity() const        { return Vec3d{ m_action.target_velocity_x, m_action.target_velocity_y, m_action.target_velocity_z }; }
     void setAction(const model::Action& a)    { m_action = a; }
 
-    template <typename S = Type> auto getId() const -> std::enable_if_t< std::is_same_v<S, model::Robot>, Rational> { return (int)this->id; }
-    template <typename S = Type> auto getId() const -> std::enable_if_t<!std::is_same_v<S, model::Robot>, Rational> { return (int)-1; }
+    template <typename S = Type> auto getId() const -> std::enable_if_t< std::is_same_v<S, model::Robot>, int> { return (int)this->id; }
+    template <typename S = Type> auto getId() const -> std::enable_if_t<!std::is_same_v<S, model::Robot>, int> { return (int)-1; }
 
     template <typename S = Type> auto radiusChangeSpeed()                  const -> std::enable_if_t< std::is_same_v<S, model::Robot>, Rational>{ return m_radiusChangeSpeed; }
     template <typename S = Type> auto radiusChangeSpeed()                  const -> std::enable_if_t<!std::is_same_v<S, model::Robot>, Rational>{ return 0; }

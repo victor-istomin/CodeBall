@@ -27,9 +27,11 @@ linalg::vec<Rational, Dim> clamp(linalg::vec<Rational, Dim> vec, Rational max)
 class Simulator
 {
 public:
-    using Vec3d = linalg::vec<double, 3>;
     using Rational = double;
     constexpr static Rational Epsilon = 1e-6;
+
+    using Vec3d = linalg::vec<Rational, 3>;
+    using Vec2d = linalg::vec<Rational, 2>;
 
 private:
     const model::Rules m_rules;

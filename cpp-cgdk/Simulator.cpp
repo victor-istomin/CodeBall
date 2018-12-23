@@ -36,7 +36,6 @@ Simulator::Dan Simulator::dan_to_arena_quarter(const Vec3d& point)
             dan_to_plane(point, goalZ),
         });
 
-    using Vec2d = linalg::vec<Rational, 2>;
     const Vec2d pointXY = point.xy();
     Vec2d arenaSqGate = { (arena.goal_width / 2) - arena.goal_top_radius, arena.goal_height - arena.goal_top_radius };
 

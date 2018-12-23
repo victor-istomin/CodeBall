@@ -11,8 +11,8 @@ class GoalManager;
 
 class Goal
 {
-protected:
-    typedef std::function<bool()> Callback;
+public:
+    enum class StepStatus { Ok, Done, AbortGoal };
 
     enum class StepType
     {
@@ -21,24 +21,28 @@ protected:
         ALLOW_MULTITASK
     };
 
-private:
-    struct Step;
-    typedef std::unique_ptr<Step> StepPtr;
+    typedef std::function<bool()>       CallbackBool;
+    typedef std::function<StepStatus()> CallbackStatus;
 
     struct Step
     {
+
         const char* m_debugName;
 
-        Callback    m_shouldAbort;
-        Callback    m_shouldProceed;
-        Callback    m_proceed;
-        bool        m_isMultitaskPoint;
+        CallbackBool    m_shouldAbort;
+        CallbackBool    m_shouldProceed;
+        CallbackStatus  m_proceed;
+        bool            m_isMultitaskPoint;
 
-        Step(Callback shouldAbort, Callback shouldProceed, Callback proceed, const char* debugName = nullptr, StepType type = StepType::ATOMIC)
+        Step(CallbackBool shouldAbort, CallbackBool shouldProceed, CallbackStatus proceed, const char* debugName = nullptr, StepType type = StepType::ATOMIC)
             : m_shouldAbort(shouldAbort), m_shouldProceed(shouldProceed), m_proceed(proceed), m_debugName(debugName)
-            , m_isMultitaskPoint(type == StepType::ALLOW_MULTITASK) 
+            , m_isMultitaskPoint(type == StepType::ALLOW_MULTITASK)
         {}
     };
+
+private:
+    struct Step;
+    typedef std::unique_ptr<Step> StepPtr;
 
     std::list<StepPtr> m_steps;
     GoalManager&       m_goalManager;
@@ -59,7 +63,7 @@ protected:
     template <typename... Args>
     void pushBackStep(Args&&... args)
     {
-        return m_steps.emplace_back(std::make_unique<Step>(std::forward<Args>(args)...));
+        m_steps.emplace_back(std::make_unique<Step>(std::forward<Args>(args)...));
     }
 
     template <typename... Args>

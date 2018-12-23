@@ -16,7 +16,8 @@ void Goal::performStep(GoalManager& goalManager, bool isBackgroundMode)
 
     if (currentStep->m_shouldProceed())
     {
-        if (currentStep->m_proceed())
+        StepStatus status = currentStep->m_proceed();
+        if(status == StepStatus::Done)
         {
             m_isStarted = true;
             currentStep = nullptr;
@@ -26,7 +27,7 @@ void Goal::performStep(GoalManager& goalManager, bool isBackgroundMode)
             if (isNoMoveComitted())
                 performStep(goalManager, isBackgroundMode);
         }
-        else
+        else if(status == StepStatus::AbortGoal)
         {
             abortGoal();
             return;
