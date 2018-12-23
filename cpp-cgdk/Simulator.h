@@ -8,11 +8,13 @@
 #include <optional>
 #include <random>
 
+#include "simd.h"
+
 // #todo - move somewhere
 template <typename Rational, int Dim>
 linalg::vec<Rational, Dim> clamp(linalg::vec<Rational, Dim> vec, Rational max)
 {
-    auto length = linalg::length(vec);
+    auto length = simd::length(vec);
     if(length != 0)
     {
         Rational k = max / length;
@@ -102,14 +104,14 @@ private:
     void collide_entities(LeftEntity& a, RightEntity& b)
     {
         Vec3d    delta_pos = b.position() - a.position();
-        Rational distance = linalg::length(delta_pos);
+        Rational distance = simd::length(delta_pos);
         Rational penetration = a.radius + b.radius - distance;
 
         if(penetration > 0)
         {
             Rational k_a = (1 / getMass(a)) / ((1 / getMass(a)) + (1 / getMass(b)));
             Rational k_b = (1 / getMass(b)) / ((1 / getMass(a)) + (1 / getMass(b)));
-            Vec3d    normal = normalize(delta_pos);
+            Vec3d    normal = simd::normalize(delta_pos);
 
             Vec3d d_a = normal * penetration * k_a;
             Vec3d d_b = normal * penetration * k_b;
@@ -155,13 +157,13 @@ public:
                 target_velocity = target_velocity - robot.touchNormal() * ground_projection;
                 Vec3d target_velocity_change = target_velocity - robot.velocity();
 
-                if(linalg::length(target_velocity_change) > 0)
+                if(simd::length(target_velocity_change) > 0)
                 {
                     Rational acceleration = m_rules.ROBOT_ACCELERATION * std::max(0.0, robot.touch_normal_y);
                     robot.setVelocity(robot.velocity()
                         + clamp(
-                            linalg::normalize(target_velocity_change) * acceleration * delta_time,
-                            length(target_velocity_change)));
+                            simd::normalize(target_velocity_change) * acceleration * delta_time,
+                            simd::length(target_velocity_change)));
                 }
             }
 
@@ -170,13 +172,13 @@ public:
                 Vec3d target_velocity_change = clamp(robot.actionTargetVelocity() - robot.velocity(),
                     robot.nitro_amount * m_rules.NITRO_POINT_VELOCITY_CHANGE);
 
-                if(linalg::length(target_velocity_change) > 0)
+                if(simd::length(target_velocity_change) > 0)
                 {
-                    Vec3d acceleration = linalg::normalize(target_velocity_change) * m_rules.ROBOT_NITRO_ACCELERATION;
-                    Vec3d velocity_change = clamp(acceleration * delta_time, linalg::length(target_velocity_change));
+                    Vec3d acceleration = simd::normalize(target_velocity_change) * m_rules.ROBOT_NITRO_ACCELERATION;
+                    Vec3d velocity_change = clamp(acceleration * delta_time, simd::length(target_velocity_change));
 
                     robot.setVelocity(robot.velocity() + velocity_change);
-                    robot.nitro_amount -= linalg::length(velocity_change) / m_rules.NITRO_POINT_VELOCITY_CHANGE;
+                    robot.nitro_amount -= simd::length(velocity_change) / m_rules.NITRO_POINT_VELOCITY_CHANGE;
                 }
             }
 

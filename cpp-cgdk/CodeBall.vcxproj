@@ -204,6 +204,7 @@
     <ClInclude Include="rapidjson\writer.h" />
     <ClInclude Include="RemoteProcessClient.h" />
     <ClInclude Include="Runner.h" />
+    <ClInclude Include="simd.h" />
     <ClInclude Include="Simulator.h" />
     <ClInclude Include="Strategy.h" />
     <ClInclude Include="Tests.h" />

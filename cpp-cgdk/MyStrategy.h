@@ -19,6 +19,8 @@ class MyStrategy : public Strategy
 
 public:
     MyStrategy();
+    ~MyStrategy();
+
 
     virtual void act(const model::Robot& me, const model::Rules& rules, const model::Game& world, model::Action& action) override;
 

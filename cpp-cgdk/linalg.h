@@ -65,33 +65,33 @@ namespace linalg
     template<class T> struct vec<T,2>
     {
         T                           x,y;
-        constexpr                   vec()                               : x(), y() {}
-        constexpr                   vec(const T & x_, const T & y_)     : x(x_), y(y_) {}
-        constexpr                   vec(const std::array<T,2> & a)		: x(a[0]), y(a[1]) {}
-        constexpr explicit          vec(const T & s)                    : vec(s, s) {}
-        constexpr explicit          vec(const T * p)                    : vec(p[0], p[1]) {}
+          constexpr                   vec()                               : x(), y() {}
+          constexpr                   vec(const T & x_, const T & y_)     : x(x_), y(y_) {}
+          constexpr                   vec(const std::array<T,2> & a)		: x(a[0]), y(a[1]) {}
+          constexpr explicit          vec(const T & s)                    : vec(s, s) {}
+          constexpr explicit          vec(const T * p)                    : vec(p[0], p[1]) {}
         template<class U>
-        constexpr explicit          vec(const vec<U,2> & v)             : vec(static_cast<T>(v.x), static_cast<T>(v.y)) {}
-        constexpr const T &         operator[] (int i) const            { return (&x)[i]; }
-        T &                         operator[] (int i)                  { return (&x)[i]; }
+          constexpr explicit          vec(const vec<U,2> & v)             : vec(static_cast<T>(v.x), static_cast<T>(v.y)) {}
+          constexpr const T &         operator[] (int i) const            { return (&x)[i]; }
+          T &                         operator[] (int i)                  { return (&x)[i]; }
     };
     template<class T> struct vec<T,3>
     {
         T                           x,y,z;
-        constexpr                   vec()                               : x(), y(), z() {}
-        constexpr                   vec(const T & x_, const T & y_, 
+          constexpr                   vec()                               : x(), y(), z() {}
+          constexpr                   vec(const T & x_, const T & y_, 
                                         const T & z_)                   : x(x_), y(y_), z(z_) {}
-        constexpr                   vec(const vec<T,2> & xy,
+          constexpr                   vec(const vec<T,2> & xy,
                                         const T & z_)                   : vec(xy.x, xy.y, z_) {}
-        constexpr                   vec(const std::array<T,3> & a)		: x(a[0]), y(a[1]), z(a[2]) {}
-        constexpr explicit          vec(const T & s)                    : vec(s, s, s) {}
-        constexpr explicit          vec(const T * p)                    : vec(p[0], p[1], p[2]) {}
+          constexpr                   vec(const std::array<T,3> & a)		: x(a[0]), y(a[1]), z(a[2]) {}
+          constexpr explicit          vec(const T & s)                    : vec(s, s, s) {}
+          constexpr explicit          vec(const T * p)                    : vec(p[0], p[1], p[2]) {}
         template<class U>
-        constexpr explicit          vec(const vec<U,3> & v)             : vec(static_cast<T>(v.x), static_cast<T>(v.y), static_cast<T>(v.z)) {}
-        constexpr const T &         operator[] (int i) const            { return (&x)[i]; }
-        T &                         operator[] (int i)                  { return (&x)[i]; }
-        constexpr const vec<T,2> &  xy() const                          { return *reinterpret_cast<const vec<T,2> *>(this); }
-        vec<T,2> &                  xy()                                { return *reinterpret_cast<vec<T,2> *>(this); }
+          constexpr explicit          vec(const vec<U,3> & v)             : vec(static_cast<T>(v.x), static_cast<T>(v.y), static_cast<T>(v.z)) {}
+          constexpr const T &         operator[] (int i) const            { return (&x)[i]; }
+          T &                         operator[] (int i)                  { return (&x)[i]; }
+          constexpr const vec<T,2> &  xy() const                          { return *reinterpret_cast<const vec<T,2> *>(this); }
+          vec<T,2> &                  xy()                                { return *reinterpret_cast<vec<T,2> *>(this); }
     };
     template<class T> struct vec<T,4>
     {
@@ -278,28 +278,28 @@ namespace linalg
     template<class A> result_t<A> fract(const A & a) { return map(a, [](scalar_t<A> l) { return l - std::floor(l); }); }
 
     // Overloads for vector op vector are implemented in terms of elementwise application of the operator, followed by casting back to the original type (integer promotion is suppressed)
-    template<class A, class B> constexpr arith_result_t<A,B> operator +  (const A & a, const B & b) { return zip(a, b, op::add<scalar_t<A,B>>{}); }
-    template<class A, class B> constexpr arith_result_t<A,B> operator -  (const A & a, const B & b) { return zip(a, b, op::sub<scalar_t<A,B>>{}); }
-    template<class A, class B> constexpr arith_result_t<A,B> operator *  (const A & a, const B & b) { return zip(a, b, op::mul<scalar_t<A,B>>{}); }
-    template<class A, class B> constexpr arith_result_t<A,B> operator /  (const A & a, const B & b) { return zip(a, b, op::div<scalar_t<A,B>>{}); }
-    template<class A, class B> constexpr arith_result_t<A,B> operator %  (const A & a, const B & b) { return zip(a, b, op::mod<scalar_t<A,B>>{}); }
-    template<class A, class B> constexpr arith_result_t<A,B> operator |  (const A & a, const B & b) { return zip(a, b, op::binary_or<scalar_t<A,B>>{}); }
-    template<class A, class B> constexpr arith_result_t<A,B> operator ^  (const A & a, const B & b) { return zip(a, b, op::binary_xor<scalar_t<A,B>>{}); }
-    template<class A, class B> constexpr arith_result_t<A,B> operator &  (const A & a, const B & b) { return zip(a, b, op::binary_and<scalar_t<A,B>>{}); }
-    template<class A, class B> constexpr arith_result_t<A,B> operator << (const A & a, const B & b) { return zip(a, b, op::lshift<scalar_t<A,B>>{}); }
-    template<class A, class B> constexpr arith_result_t<A,B> operator >> (const A & a, const B & b) { return zip(a, b, op::rshift<scalar_t<A,B>>{}); }
+    template<class A, class B>   constexpr arith_result_t<A,B> operator +  (const A & a, const B & b) { return zip(a, b, op::add<scalar_t<A,B>>{}); }
+    template<class A, class B>   constexpr arith_result_t<A,B> operator -  (const A & a, const B & b) { return zip(a, b, op::sub<scalar_t<A,B>>{}); }
+    template<class A, class B>   constexpr arith_result_t<A,B> operator *  (const A & a, const B & b) { return zip(a, b, op::mul<scalar_t<A,B>>{}); }
+    template<class A, class B>   constexpr arith_result_t<A,B> operator /  (const A & a, const B & b) { return zip(a, b, op::div<scalar_t<A,B>>{}); }
+    template<class A, class B>   constexpr arith_result_t<A,B> operator %  (const A & a, const B & b) { return zip(a, b, op::mod<scalar_t<A,B>>{}); }
+    template<class A, class B>   constexpr arith_result_t<A,B> operator |  (const A & a, const B & b) { return zip(a, b, op::binary_or<scalar_t<A,B>>{}); }
+    template<class A, class B>   constexpr arith_result_t<A,B> operator ^  (const A & a, const B & b) { return zip(a, b, op::binary_xor<scalar_t<A,B>>{}); }
+    template<class A, class B>   constexpr arith_result_t<A,B> operator &  (const A & a, const B & b) { return zip(a, b, op::binary_and<scalar_t<A,B>>{}); }
+    template<class A, class B>   constexpr arith_result_t<A,B> operator << (const A & a, const B & b) { return zip(a, b, op::lshift<scalar_t<A,B>>{}); }
+    template<class A, class B>   constexpr arith_result_t<A,B> operator >> (const A & a, const B & b) { return zip(a, b, op::rshift<scalar_t<A,B>>{}); }
     
     // Overloads for assignment operators are implemented trivially
-    template<class A, class B> result_t<A,A> & operator +=  (A & a, const B & b) { return a = a + b; }
-    template<class A, class B> result_t<A,A> & operator -=  (A & a, const B & b) { return a = a - b; }
-    template<class A, class B> result_t<A,A> & operator *=  (A & a, const B & b) { return a = a * b; }
-    template<class A, class B> result_t<A,A> & operator /=  (A & a, const B & b) { return a = a / b; }
-    template<class A, class B> result_t<A,A> & operator %=  (A & a, const B & b) { return a = a % b; }
-    template<class A, class B> result_t<A,A> & operator |=  (A & a, const B & b) { return a = a | b; }
-    template<class A, class B> result_t<A,A> & operator ^=  (A & a, const B & b) { return a = a ^ b; }
-    template<class A, class B> result_t<A,A> & operator &=  (A & a, const B & b) { return a = a & b; }
-    template<class A, class B> result_t<A,A> & operator <<= (A & a, const B & b) { return a = a << b; }
-    template<class A, class B> result_t<A,A> & operator >>= (A & a, const B & b) { return a = a >> b; }
+    template<class A, class B>   result_t<A,A> & operator +=  (A & a, const B & b) { return a = a + b; }
+    template<class A, class B>   result_t<A,A> & operator -=  (A & a, const B & b) { return a = a - b; }
+    template<class A, class B>   result_t<A,A> & operator *=  (A & a, const B & b) { return a = a * b; }
+    template<class A, class B>   result_t<A,A> & operator /=  (A & a, const B & b) { return a = a / b; }
+    template<class A, class B>   result_t<A,A> & operator %=  (A & a, const B & b) { return a = a % b; }
+    template<class A, class B>   result_t<A,A> & operator |=  (A & a, const B & b) { return a = a | b; }
+    template<class A, class B>   result_t<A,A> & operator ^=  (A & a, const B & b) { return a = a ^ b; }
+    template<class A, class B>   result_t<A,A> & operator &=  (A & a, const B & b) { return a = a & b; }
+    template<class A, class B>   result_t<A,A> & operator <<= (A & a, const B & b) { return a = a << b; }
+    template<class A, class B>   result_t<A,A> & operator >>= (A & a, const B & b) { return a = a >> b; }
 
     // Mirror the set of binary scalar math functions to apply elementwise to vectors
     template<class A, class B> constexpr result_t<A,B> min  (const A & a, const B & b) { return zip(a, b, op::min<scalar_t<A,B>>{}); }
@@ -319,25 +319,25 @@ namespace linalg
     template<class A, class B> bool_result_t<A,B> gequal (const A & a, const B & b) { return zip(a, b, op::gequal <scalar_t<A,B>>{}); }
 
     // Support for vector algebra
-    template<class T> constexpr T                 cross    (const vec<T,2> & a, const vec<T,2> & b)      { return a.x*b.y-a.y*b.x; }
-    template<class T> constexpr vec<T,2>          cross    (T a, const vec<T,2> & b)                     { return {-a*b.y, a*b.x}; }
-    template<class T> constexpr vec<T,2>          cross    (const vec<T,2> & a, T b)                     { return {a.y*b, -a.x*b}; }
-    template<class T> constexpr vec<T,3>          cross    (const vec<T,3> & a, const vec<T,3> & b)      { return {a.y*b.z-a.z*b.y, a.z*b.x-a.x*b.z, a.x*b.y-a.y*b.x}; }
-    template<class T, int M> constexpr T          dot      (const vec<T,M> & a, const vec<T,M> & b)      { return sum(a*b); }
-    template<class T, int M> constexpr T          length2  (const vec<T,M> & a)                          { return dot(a,a); }
-    template<class T, int M> T                    length   (const vec<T,M> & a)                          { return std::sqrt(length2(a)); }
-    template<class T, int M> vec<T,M>             normalize(const vec<T,M> & a)                          { return a / length(a); }
-    template<class T, int M> constexpr T          distance2(const vec<T,M> & a, const vec<T,M> & b)      { return length2(b-a); }
-    template<class T, int M> T                    distance (const vec<T,M> & a, const vec<T,M> & b)      { return length(b-a); }
-    template<class T, int M> T                    uangle   (const vec<T,M> & a, const vec<T,M> & b)      { T d=dot(a,b); return d > 1 ? 0 : std::acos(d < -1 ? -1 : d); }
-    template<class T, int M> T                    angle    (const vec<T,M> & a, const vec<T,M> & b)      { return uangle(normalize(a), normalize(b)); }
-    template<class T> vec<T,2>                    rot      (T a, const vec<T,2> & v)                     { const T s = std::sin(a), c = std::cos(a); return {v.x*c - v.y*s, v.x*s + v.y*c}; }
-    template<class T, int M> constexpr vec<T,M>   lerp     (const vec<T,M> & a, const vec<T,M> & b, T t) { return a*(1-t) + b*t; }
-    template<class T, int M> vec<T,M>             nlerp    (const vec<T,M> & a, const vec<T,M> & b, T t) { return normalize(lerp(a,b,t)); }
-    template<class T, int M> vec<T,M>             slerp    (const vec<T,M> & a, const vec<T,M> & b, T t) { T th=uangle(a,b); return th == 0 ? a : a*(std::sin(th*(1-t))/std::sin(th)) + b*(std::sin(th*t)/std::sin(th)); }
-    template<class T, int M> constexpr mat<T,M,2> outerprod(const vec<T,M> & a, const vec<T,2> & b)      { return {a*b.x, a*b.y}; }
-    template<class T, int M> constexpr mat<T,M,3> outerprod(const vec<T,M> & a, const vec<T,3> & b)      { return {a*b.x, a*b.y, a*b.z}; }
-    template<class T, int M> constexpr mat<T,M,4> outerprod(const vec<T,M> & a, const vec<T,4> & b)      { return {a*b.x, a*b.y, a*b.z, a*b.w}; }
+    template<class T> constexpr T                   cross    (const vec<T,2> & a, const vec<T,2> & b)      { return a.x*b.y-a.y*b.x; }
+    template<class T> constexpr vec<T,2>            cross    (T a, const vec<T,2> & b)                     { return {-a*b.y, a*b.x}; }
+    template<class T> constexpr vec<T,2>            cross    (const vec<T,2> & a, T b)                     { return {a.y*b, -a.x*b}; }
+    template<class T> constexpr vec<T,3>            cross    (const vec<T,3> & a, const vec<T,3> & b)      { return {a.y*b.z-a.z*b.y, a.z*b.x-a.x*b.z, a.x*b.y-a.y*b.x}; }
+    template<class T, int M> constexpr T            dot      (const vec<T,M> & a, const vec<T,M> & b)      { return sum(a*b); }
+    template<class T, int M> constexpr T            length2  (const vec<T,M> & a)                          { return dot(a,a); }
+    template<class T, int M> T                      length   (const vec<T,M> & a)                          { return std::sqrt(length2(a)); }
+    template<class T, int M> vec<T,M>               normalize(const vec<T,M> & a)                          { return a / length(a); }
+    template<class T, int M> constexpr T            distance2(const vec<T,M> & a, const vec<T,M> & b)      { return length2(b-a); }
+    template<class T, int M> T                      distance (const vec<T,M> & a, const vec<T,M> & b)      { return length(b-a); }
+    template<class T, int M> T                      uangle   (const vec<T,M> & a, const vec<T,M> & b)      { T d=dot(a,b); return d > 1 ? 0 : std::acos(d < -1 ? -1 : d); }
+    template<class T, int M> T                      angle    (const vec<T,M> & a, const vec<T,M> & b)      { return uangle(normalize(a), normalize(b)); }
+    template<class T> vec<T,2>                      rot      (T a, const vec<T,2> & v)                     { const T s = std::sin(a), c = std::cos(a); return {v.x*c - v.y*s, v.x*s + v.y*c}; }
+    template<class T, int M> constexpr vec<T,M>     lerp     (const vec<T,M> & a, const vec<T,M> & b, T t) { return a*(1-t) + b*t; }
+    template<class T, int M> vec<T,M>               nlerp    (const vec<T,M> & a, const vec<T,M> & b, T t) { return normalize(lerp(a,b,t)); }
+    template<class T, int M> vec<T,M>               slerp    (const vec<T,M> & a, const vec<T,M> & b, T t) { T th=uangle(a,b); return th == 0 ? a : a*(std::sin(th*(1-t))/std::sin(th)) + b*(std::sin(th*t)/std::sin(th)); }
+    template<class T, int M> constexpr mat<T,M,2>   outerprod(const vec<T,M> & a, const vec<T,2> & b)      { return {a*b.x, a*b.y}; }
+    template<class T, int M> constexpr mat<T,M,3>   outerprod(const vec<T,M> & a, const vec<T,3> & b)      { return {a*b.x, a*b.y, a*b.z}; }
+    template<class T, int M> constexpr mat<T,M,4>   outerprod(const vec<T,M> & a, const vec<T,4> & b)      { return {a*b.x, a*b.y, a*b.z, a*b.w}; }
 
     // Support for quaternion algebra using 4D vectors, representing xi + yj + zk + w
     template<class T> constexpr vec<T,4> qconj(const vec<T,4> & q)                     { return {-q.x,-q.y,-q.z,q.w}; }

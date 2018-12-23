@@ -8,12 +8,12 @@ Simulator::Dan Simulator::dan_to_plane(const Vec3d& point, const Plane& plane)
 
 Simulator::Dan Simulator::dan_to_sphere_inner(const Vec3d& point, const Sphere& sphere)
 {
-    return Dan{ sphere.radius - linalg::length(point - sphere.center), linalg::normalize(sphere.center - point) };
+    return Dan{ sphere.radius - simd::length(point - sphere.center), simd::normalize(sphere.center - point) };
 }
 
 Simulator::Dan Simulator::dan_to_sphere_outer(const Vec3d& point, const Sphere& sphere)
 {
-    return Dan{ linalg::length(point - sphere.center) - sphere.radius, linalg::normalize(point - sphere.center) };
+    return Dan{ simd::length(point - sphere.center) - sphere.radius, simd::normalize(point - sphere.center) };
 }
 
 Simulator::Dan Simulator::dan_to_arena_quarter(const Vec3d& point)

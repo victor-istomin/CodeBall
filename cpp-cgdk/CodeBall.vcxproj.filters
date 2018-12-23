@@ -233,5 +233,8 @@
     <ClInclude Include="QuickStart_MyStrategy.h">
       <Filter>Header Files\Strategy</Filter>
     </ClInclude>
+    <ClInclude Include="simd.h">
+      <Filter>Header Files\Strategy</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
