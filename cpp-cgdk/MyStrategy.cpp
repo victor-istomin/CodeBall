@@ -61,7 +61,7 @@ void MyStrategy::act(const Robot& me, const Rules& rules, const Game& game, Acti
                 m_simulator->update(simRobots, simBall, microtickTime);
 
             for(EntityRobot& r : simRobots)
-                r.setAction(action);
+                r.setAction(unitAction);
         }
 
         auto finishSimTime = std::chrono::high_resolution_clock::now();
