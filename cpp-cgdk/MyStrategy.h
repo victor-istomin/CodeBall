@@ -22,6 +22,8 @@ class MyStrategy : public Strategy
     std::unique_ptr<State>       m_state;
     std::unique_ptr<GoalManager> m_goalManager;
     //std::unique_ptr<QuickStart_MyStrategy> m_qsGuy;   // might be used for simulation
+
+    int         m_lastSimTick = -1;
     std::string m_renderHint;
 
 public:

@@ -26,23 +26,28 @@ TakeBallPair::~TakeBallPair()
 
 Goal::StepStatus goals::TakeBallPair::rushIntoBall()
 {
-    Entity<model::Ball> ball = state().game().ball;
-    Entity<model::Robot>  me = state().me();
+    Entity<model::Ball>  ball  = state().game().ball;
+    Entity<model::Robot> me    = state().me();
+    const model::Rules&  rules = state().rules();
 
     Vec2d meXZ   = { me.position().x, me.position().z };
     Vec2d ballXZ = { ball.position().z, ball.position().z };
+    Vec2d displacementXZ = ballXZ - meXZ;
+    Vec2d directionXZ    = linalg::normalize(displacementXZ);
 
-    Vec2d approachSpeedXZ = Vec2d{ me.velocity().x, me.velocity().z } -Vec2d{ ball.velocity().x, ball.velocity().z };
+    Vec2d meVelocityXZ   = Vec2d{ me.velocity().x, me.velocity().z };
+    Vec2d ballVelocityXZ = Vec2d{ ball.velocity().x, ball.velocity().z };
+    double approachSpeed = linalg::dot(meVelocityXZ, directionXZ) - linalg::dot(ballVelocityXZ, directionXZ);
+    double maxApproachSpeed = rules.ROBOT_MAX_GROUND_SPEED - linalg::dot(ballVelocityXZ, directionXZ);
 
     // #todo_r2 - nitro support
-    static const double MAX_TICK_ACCELERATION = state().rules().ROBOT_ACCELERATION / state().rules().TICKS_PER_SECOND;
+    const double acceleration = approachSpeed < maxApproachSpeed ? (rules.ROBOT_ACCELERATION / rules.TICKS_PER_SECOND) : 0;
 
-    double distanceXZ = linalg::distance(meXZ, ballXZ);
-    double minTime = timeToApproach(distanceXZ, linalg::length(approachSpeedXZ), MAX_TICK_ACCELERATION);
+    double distanceXZ = linalg::length(displacementXZ);
+    double approachTimeSecs = uniform_accel::distanceToTime(distanceXZ, rules.ROBOT_ACCELERATION, approachSpeed, maxApproachSpeed); // #todo - nitro
+    double approachTimeTics = approachTimeSecs * rules.TICKS_PER_SECOND;
 
-    Vec3d displacement = ball.position() - me.position();
-
-    Vec3d newVelocity = linalg::normalize(Vec3d{ displacement.x, 0, displacement.z }) * (linalg::length(me.velocity()) + MAX_TICK_ACCELERATION);
+    Vec3d newVelocity = linalg::normalize(Vec3d{ displacementXZ[0], 0, displacementXZ[1] }) * (linalg::length(me.velocity()) + acceleration);
 
     model::Action action;
     action.target_velocity_x = newVelocity.x;
@@ -50,6 +55,28 @@ Goal::StepStatus goals::TakeBallPair::rushIntoBall()
 
     if(linalg::length2(ball.position() - me.position()) < pow2(state().rules().ROBOT_MAX_RADIUS + state().rules().BALL_RADIUS))
         action.jump_speed = state().rules().ROBOT_MAX_JUMP_SPEED;
+
+    static bool askTeammateToJump = false;
+
+    // decide whether it's reasonable to jump
+    std::optional<Simulator::Vec3d> predictedBallPos = state().predictedBallPos((int)approachTimeTics + state().game().current_tick);
+    if(predictedBallPos.has_value())
+    {
+        double desiredHeight = predictedBallPos->y;
+        double ticksToLift   = uniform_accel::distanceToTime(desiredHeight, -rules.GRAVITY, rules.ROBOT_MAX_JUMP_SPEED) * rules.TICKS_PER_SECOND;
+        if(ticksToLift > approachTimeTics)
+        {
+            action.jump_speed = state().rules().ROBOT_MAX_JUMP_SPEED;
+            askTeammateToJump = true;   // in order to approach ball simultaneously
+        }
+    }
+
+    // #todo - this is a proof-of-concept quality code...
+    if(askTeammateToJump && action.jump_speed == 0)
+    {
+        action.jump_speed = state().rules().ROBOT_MAX_JUMP_SPEED;
+        askTeammateToJump = false;   // in order to approach ball simultaneously
+    }
 
     state().commitAction(action);
 

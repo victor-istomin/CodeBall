@@ -35,8 +35,9 @@ void MyStrategy::act(const Robot& me, const Rules& rules, const Game& game, Acti
 
     m_state->updateState(me, rules, game, action);
 
-    if(0 == (me.id % 2) /*&& 0 == (game.current_tick % 2)*/)
+    if(m_lastSimTick < game.current_tick)
     {
+        m_lastSimTick = game.current_tick;
 
         using EntityRobot = Entity<Robot>;
         using EntityBall  = Entity<Ball>;
@@ -47,7 +48,7 @@ void MyStrategy::act(const Robot& me, const Rules& rules, const Game& game, Acti
             simRobots.emplace_back(r);
 
         constexpr int SIM_TICKS = 50;
-        int simUntil = (game.current_tick / SIM_TICKS * SIM_TICKS) + SIM_TICKS;
+        int simUntil = (game.current_tick / SIM_TICKS * SIM_TICKS) + SIM_TICKS;     // #todo #crit sim always at least SIM_TICKS for goals::TakeBallPair,
         const double tickTime = 1.0 / rules.TICKS_PER_SECOND;
         const double microtickTime = tickTime / rules.MICROTICKS_PER_TICK;
 
@@ -60,6 +61,7 @@ void MyStrategy::act(const Robot& me, const Rules& rules, const Game& game, Acti
             for(int microtick = 0; microtick < rules.MICROTICKS_PER_TICK; ++microtick)
                 m_simulator->update(simRobots, simBall, microtickTime);
 
+            m_state->saveBallPos(tick, simBall.position());
             for(EntityRobot& r : simRobots)
                 r.setAction(unitAction);
         }
