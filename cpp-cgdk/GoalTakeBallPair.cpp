@@ -14,7 +14,7 @@ struct Always { bool operator()() const { return true; } };
 TakeBallPair::TakeBallPair(State& state, GoalManager& goalManager)
     : Goal(state, goalManager)
 {
-    pushBackStep(Never()/*abort*/, Always()/*proceed*/, [this]() { return this->rushIntoBall(); }, "rushIntoBall");
+    pushBackStep([this]() { return this->isFinished(); }, Always()/*proceed*/, [this]() { return this->rushIntoBall(); }, "rushIntoBall");
 }
 
 TakeBallPair::~TakeBallPair()
@@ -35,6 +35,13 @@ Goal::StepStatus goals::TakeBallPair::rushIntoBall()
     Vec2d displacementXZ = ballXZ - meXZ;
     Vec2d directionXZ    = linalg::normalize(displacementXZ);
 
+    Vec2d ballSurface = ballXZ - directionXZ * rules.BALL_RADIUS;
+    Vec2d meSurface = meXZ + directionXZ * rules.ROBOT_MIN_RADIUS * 0.9;
+    displacementXZ = ballSurface - meSurface;
+    directionXZ = linalg::normalize(displacementXZ);
+
+    //displacementXZ += directionXZ * (rules.BALL_RADIUS + rules.ROBOT_MIN_RADIUS * 0.9);
+
     Vec2d meVelocityXZ   = Vec2d{ me.velocity().x, me.velocity().z };
     Vec2d ballVelocityXZ = Vec2d{ ball.velocity().x, ball.velocity().z };
     double approachSpeed = linalg::dot(meVelocityXZ, directionXZ) - linalg::dot(ballVelocityXZ, directionXZ);
@@ -54,32 +61,45 @@ Goal::StepStatus goals::TakeBallPair::rushIntoBall()
     action.target_velocity_z = newVelocity.z;
 
     if(linalg::length2(ball.position() - me.position()) < pow2(state().rules().ROBOT_MAX_RADIUS + state().rules().BALL_RADIUS))
+    {
         action.jump_speed = state().rules().ROBOT_MAX_JUMP_SPEED;
-
-    static bool askTeammateToJump = false;
+        m_lastTick = state().game().current_tick;
+    }
 
     // decide whether it's reasonable to jump
-    std::optional<Simulator::Vec3d> predictedBallPos = state().predictedBallPos((int)approachTimeTics + state().game().current_tick);
+
+    static bool askTeammateToJump = false;
+    std::optional<State::PredictedPos> predictedBallPos = state().predictedBallPos((int)approachTimeTics + state().game().current_tick);
     if(predictedBallPos.has_value())
     {
-        double desiredHeight = predictedBallPos->y;
+        double desiredHeight = predictedBallPos->m_pos.y;
         double ticksToLift   = uniform_accel::distanceToTime(desiredHeight, -rules.GRAVITY, rules.ROBOT_MAX_JUMP_SPEED) * rules.TICKS_PER_SECOND;
         if(ticksToLift > approachTimeTics)
         {
             action.jump_speed = state().rules().ROBOT_MAX_JUMP_SPEED;
-            askTeammateToJump = true;   // in order to approach ball simultaneously
+            askTeammateToJump = true;
         }
     }
 
     // #todo - this is a proof-of-concept quality code...
     if(askTeammateToJump && action.jump_speed == 0)
     {
-        action.jump_speed = state().rules().ROBOT_MAX_JUMP_SPEED;
-        askTeammateToJump = false;   // in order to approach ball simultaneously
+        action.jump_speed = state().rules().ROBOT_MAX_JUMP_SPEED; 
+        askTeammateToJump = false;
     }
 
     state().commitAction(action);
 
     return StepStatus::Ok;
+}
+
+bool goals::TakeBallPair::isLastTick() const
+{
+    return m_lastTick != TICK_NONE && state().game().current_tick == m_lastTick;
+}
+
+bool goals::TakeBallPair::isFinished() const
+{
+    return m_lastTick != TICK_NONE && state().game().current_tick > m_lastTick;
 }
 

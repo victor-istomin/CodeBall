@@ -48,7 +48,8 @@ void MyStrategy::act(const Robot& me, const Rules& rules, const Game& game, Acti
             simRobots.emplace_back(r);
 
         constexpr int SIM_TICKS = 50;
-        int simUntil = (game.current_tick / SIM_TICKS * SIM_TICKS) + SIM_TICKS;     // #todo #crit sim always at least SIM_TICKS for goals::TakeBallPair,
+        int simUntil  = game.current_tick + SIM_TICKS;
+        int ghostTick = (game.current_tick / SIM_TICKS * SIM_TICKS) + SIM_TICKS;
         const double tickTime = 1.0 / rules.TICKS_PER_SECOND;
         const double microtickTime = tickTime / rules.MICROTICKS_PER_TICK;
 
@@ -61,7 +62,7 @@ void MyStrategy::act(const Robot& me, const Rules& rules, const Game& game, Acti
             for(int microtick = 0; microtick < rules.MICROTICKS_PER_TICK; ++microtick)
                 m_simulator->update(simRobots, simBall, microtickTime);
 
-            m_state->saveBallPos(tick, simBall.position());
+            m_state->saveBallPos(tick, simBall.position(), simBall.velocity());
             for(EntityRobot& r : simRobots)
                 r.setAction(unitAction);
         }
@@ -71,7 +72,7 @@ void MyStrategy::act(const Robot& me, const Rules& rules, const Game& game, Acti
         g_simDurationMs += lastSimTime;
         ++g_simCount;
 
-        debugRender(simBall, simUntil, game, lastSimTime);
+        debugRender(ghostTick, game, lastSimTime);
     }
 
     m_goalManager->tick();
@@ -79,7 +80,7 @@ void MyStrategy::act(const Robot& me, const Rules& rules, const Game& game, Acti
     return;
 }
 
-void MyStrategy::debugRender(Entity<model::Ball>& simBall, int simUntil, const model::Game& game, double lastSimMs)
+void MyStrategy::debugRender(int ghostTick, const model::Game& game, double lastSimMs)
 {
 #ifdef DEBUG_RENDER
     std::string s = R"(
@@ -118,13 +119,21 @@ void MyStrategy::debugRender(Entity<model::Ball>& simBall, int simUntil, const m
         }
     };
 
+    auto predictedPos = m_state->predictedBallPos(ghostTick);
+
     using EntityBall = Entity<Ball>;
+    EntityBall simBall = m_state->game().ball;
+    if (predictedPos.has_value())
+    {
+        simBall.setPosition(predictedPos->m_pos);
+        simBall.setVelocity(predictedPos->m_velocity);
+    }
 
     format(s, "%x", simBall.x);
     format(s, "%y", simBall.y);
     format(s, "%z", simBall.z);
 
-    format(s, "%pt", simUntil);
+    format(s, "%pt", ghostTick);
     format(s, "%at", game.current_tick);
     format(s, "%lst", lastSimMs);
     format(s, "%ast", g_simCount == 0 ? 0 : (g_simDurationMs / g_simCount));

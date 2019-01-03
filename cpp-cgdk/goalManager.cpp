@@ -6,7 +6,7 @@ void GoalManager::fillCurrentGoals()
 {
     // use sorted list because std::multimap looks like overengieneering
 
-    if (m_state.game().current_tick == 0)
+    if (m_state.isNewRound())
     {
         int priority = 0;
         int backPriority = 256;
