@@ -37,7 +37,7 @@ void MyStrategy::act(const Robot& me, const Rules& rules, const Game& game, Acti
     if(m_state->jumpPredictions().empty())
         initJumpPredictions();
 
-    if(m_lastSimTick < game.current_tick)
+    if(m_lastSimTick < game.current_tick && m_state->roundLocalTick() >= 0)
     {
         m_state->invalidateBallPredictions();
         m_lastSimTick = game.current_tick;

@@ -58,6 +58,7 @@ Goal::StepStatus goals::TakeBallPair::rushIntoBall()
 
     if(linalg::length2(ball.position() - me.position()) < pow2(state().rules().ROBOT_MAX_RADIUS + state().rules().BALL_RADIUS))
     {
+        // first bot just touch ball, second one will hit it with jump speed
         action.jump_speed = state().rules().ROBOT_MAX_JUMP_SPEED;
         m_lastTick = state().game().current_tick;
     }

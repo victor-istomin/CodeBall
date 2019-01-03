@@ -24,8 +24,12 @@ void State::updateState(const model::Robot& me, const model::Rules& rules, const
     Score score = { game.players[0].score, game.players[1].score };
     if(!game.players[0].me)
         std::swap(score.first, score.second);
-    m_isNewRound = m_score != score && isBallAtStartPos;
 
+    bool isGoal = m_score != score;
+    if(isGoal && game.current_tick > m_roundStartTick)
+        m_roundStartTick = game.current_tick + rules.RESET_TICKS;
+
+    m_isNewRound = isGoal && isBallAtStartPos;
     if(isBallAtStartPos)
         m_score = score;
 

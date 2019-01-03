@@ -54,6 +54,7 @@ private:
 
     bool m_isMoveCommitted = false;
     bool m_isNewRound      = false;
+    int  m_roundStartTick  = 0;
 
     std::vector<PredictedPos>        m_ballPrediction;
     std::vector<PredictedJumpHeight> m_jumpPredictions;
@@ -83,7 +84,8 @@ public:
         m_isMoveCommitted = true;
     }
 
-    bool isMoveCommitted() const { return m_isMoveCommitted; }
-    bool isNewRound() const      { return m_isNewRound; }
+    bool isMoveCommitted() const         { return m_isMoveCommitted; }
+    bool isNewRound() const              { return m_isNewRound; }
+    int  roundLocalTick() const          { return m_game->current_tick - m_roundStartTick; }
 };
 
