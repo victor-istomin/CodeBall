@@ -119,7 +119,7 @@ private:
             a.setPosition(a.position() - d_a);
             b.setPosition(b.position() + d_b);
 
-            Rational delta_v = linalg::dot(b.velocity() - a.velocity(), normal) + b.radiusChangeSpeed() - a.radiusChangeSpeed();
+            Rational delta_v = linalg::dot(b.velocity() - a.velocity(), normal) - b.radiusChangeSpeed() - a.radiusChangeSpeed();
 
             if(delta_v < 0)   // #todo - why < 0?
             {
