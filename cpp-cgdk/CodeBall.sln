@@ -12,12 +12,24 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "csimplesocket", "csimplesoc
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug_fast|x64 = Debug_fast|x64
+		Debug_fast|x86 = Debug_fast|x86
+		Debug_optimized|x64 = Debug_optimized|x64
+		Debug_optimized|x86 = Debug_optimized|x86
 		Debug|x64 = Debug|x64
 		Debug|x86 = Debug|x86
 		Release|x64 = Release|x64
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B87E566B-2E8A-47AF-BC50-383EB341A5E3}.Debug_fast|x64.ActiveCfg = Debug_fast|x64
+		{B87E566B-2E8A-47AF-BC50-383EB341A5E3}.Debug_fast|x64.Build.0 = Debug_fast|x64
+		{B87E566B-2E8A-47AF-BC50-383EB341A5E3}.Debug_fast|x86.ActiveCfg = Debug_fast|Win32
+		{B87E566B-2E8A-47AF-BC50-383EB341A5E3}.Debug_fast|x86.Build.0 = Debug_fast|Win32
+		{B87E566B-2E8A-47AF-BC50-383EB341A5E3}.Debug_optimized|x64.ActiveCfg = Debug_optimized|x64
+		{B87E566B-2E8A-47AF-BC50-383EB341A5E3}.Debug_optimized|x64.Build.0 = Debug_optimized|x64
+		{B87E566B-2E8A-47AF-BC50-383EB341A5E3}.Debug_optimized|x86.ActiveCfg = Debug_optimized|Win32
+		{B87E566B-2E8A-47AF-BC50-383EB341A5E3}.Debug_optimized|x86.Build.0 = Debug_optimized|Win32
 		{B87E566B-2E8A-47AF-BC50-383EB341A5E3}.Debug|x64.ActiveCfg = Debug|x64
 		{B87E566B-2E8A-47AF-BC50-383EB341A5E3}.Debug|x64.Build.0 = Debug|x64
 		{B87E566B-2E8A-47AF-BC50-383EB341A5E3}.Debug|x86.ActiveCfg = Debug|Win32
@@ -26,6 +38,14 @@ Global
 		{B87E566B-2E8A-47AF-BC50-383EB341A5E3}.Release|x64.Build.0 = Release|x64
 		{B87E566B-2E8A-47AF-BC50-383EB341A5E3}.Release|x86.ActiveCfg = Release|Win32
 		{B87E566B-2E8A-47AF-BC50-383EB341A5E3}.Release|x86.Build.0 = Release|Win32
+		{C3ABFA77-B9D1-4B27-9DCB-8CF8EA03AF85}.Debug_fast|x64.ActiveCfg = Debug_fast|x64
+		{C3ABFA77-B9D1-4B27-9DCB-8CF8EA03AF85}.Debug_fast|x64.Build.0 = Debug_fast|x64
+		{C3ABFA77-B9D1-4B27-9DCB-8CF8EA03AF85}.Debug_fast|x86.ActiveCfg = Debug_fast|Win32
+		{C3ABFA77-B9D1-4B27-9DCB-8CF8EA03AF85}.Debug_fast|x86.Build.0 = Debug_fast|Win32
+		{C3ABFA77-B9D1-4B27-9DCB-8CF8EA03AF85}.Debug_optimized|x64.ActiveCfg = Debug_optimized|x64
+		{C3ABFA77-B9D1-4B27-9DCB-8CF8EA03AF85}.Debug_optimized|x64.Build.0 = Debug_optimized|x64
+		{C3ABFA77-B9D1-4B27-9DCB-8CF8EA03AF85}.Debug_optimized|x86.ActiveCfg = Debug_optimized|Win32
+		{C3ABFA77-B9D1-4B27-9DCB-8CF8EA03AF85}.Debug_optimized|x86.Build.0 = Debug_optimized|Win32
 		{C3ABFA77-B9D1-4B27-9DCB-8CF8EA03AF85}.Debug|x64.ActiveCfg = Debug|x64
 		{C3ABFA77-B9D1-4B27-9DCB-8CF8EA03AF85}.Debug|x64.Build.0 = Debug|x64
 		{C3ABFA77-B9D1-4B27-9DCB-8CF8EA03AF85}.Debug|x86.ActiveCfg = Debug|Win32

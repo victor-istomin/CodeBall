@@ -31,10 +31,12 @@ public:
 
     virtual void act(const model::Robot& me, const model::Rules& rules, const model::Game& world, model::Action& action) override;
 
-    void debugRender(Entity<model::Ball>& simBall, int simUntil, const model::Game& game, double lastSimMs);
+    void debugRender(int ghostTick, const model::Game& game, double lastSimMs);
 
     virtual std::string custom_rendering() override { return m_renderHint; }
 
+private:
+    void initJumpPredictions();
 };
 
 #endif

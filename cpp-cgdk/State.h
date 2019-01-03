@@ -21,21 +21,43 @@ public:
     {
         int   m_tick = -1;
         Vec3d m_pos;
+        Vec3d m_velocity;
 
         PredictedPos() = default;
-        PredictedPos(int tick, Vec3d&& pos) : m_tick(tick), m_pos(pos) {}
+        PredictedPos(int tick, Vec3d&& pos, Vec3d&& velocity) : m_tick(tick), m_pos(pos), m_velocity(velocity) {}
+    };
+
+    struct PredictedJumpHeight
+    {
+        double m_height       = 0;
+        double m_initialSpeed = 0;
+        double m_timeToReach  = 0;
+        double m_velocity_y   = 0;
+
+        PredictedJumpHeight(int tick, double initialSpeed, Vec3d&& pos, Vec3d&& velocity)
+            : m_height(pos.y)
+            , m_initialSpeed(initialSpeed)
+            , m_timeToReach(tick)
+            , m_velocity_y(velocity.y)
+        {
+        }
     };
 
 private:
+    using Score = std::pair<int/*mine*/, int/*their*/>;
 
     const model::Robot* m_me     = nullptr;
     const model::Rules* m_rules  = nullptr;
     const model::Game*  m_game   = nullptr;
     model::Action*      m_action = nullptr;
+    Score               m_score  = { -1, -1 };
 
     bool m_isMoveCommitted = false;
+    bool m_isNewRound      = false;
+    int  m_roundStartTick  = 0;
 
-    std::vector<PredictedPos> m_ballPrediction;
+    std::vector<PredictedPos>        m_ballPrediction;
+    std::vector<PredictedJumpHeight> m_jumpPredictions;
 
 public:
     State();
@@ -46,19 +68,15 @@ public:
     const model::Game&   game() const   { return *m_game; }
     const model::Action& action() const { return *m_action; }
 
-    void updateState(const model::Robot& me, const model::Rules& rules, const model::Game& game, model::Action& action)
-    {
-        m_me     = &me;
-        m_rules  = &rules;
-        m_game   = &game;
-        m_action = &action;
-        m_isMoveCommitted = false;
+    void updateState(const model::Robot& me, const model::Rules& rules, const model::Game& game, model::Action& action);
 
-        m_ballPrediction.resize(0);    // resize will not reduce capacity
-    }
+    void saveBallPos(int tick, Vec3d&& pos, Vec3d&& velocity);
+    std::optional<PredictedPos> predictedBallPos(int tick) const;
+    void invalidateBallPredictions();
 
-    void saveBallPos(int tick, Vec3d&& pos);
-    std::optional<Vec3d> predictedBallPos(int tick) const;
+    void saveJumpPrediction(int tick, double initialSpeed, Vec3d&& pos, Vec3d&& velocity);
+    const std::vector<PredictedJumpHeight>& jumpPredictions() const { return m_jumpPredictions; }
+    
 
     void commitAction(const model::Action& a) 
     { 
@@ -66,6 +84,8 @@ public:
         m_isMoveCommitted = true;
     }
 
-    bool isMoveCommitted() const { return m_isMoveCommitted; }
+    bool isMoveCommitted() const         { return m_isMoveCommitted; }
+    bool isNewRound() const              { return m_isNewRound; }
+    int  roundLocalTick() const          { return m_game->current_tick - m_roundStartTick; }
 };
 

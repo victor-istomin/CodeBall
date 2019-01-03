@@ -34,8 +34,8 @@ public:
     Vec3d velocity()    const                 { return Vec3d { velocity_x, velocity_y, velocity_z }; }
     Rational radiusChangeSpeed() const        { return m_radiusChangeSpeed; }
 
-    void setPosition(Vec3d&& v)               { x = v.x; y = v.y; z = v.z; }
-    void setVelocity(Vec3d&& v)               { velocity_x = v.x; velocity_y = v.y; velocity_z = v.z; }
+    void setPosition(const Vec3d& v)          { x = v.x; y = v.y; z = v.z; }
+    void setVelocity(const Vec3d& v)          { velocity_x = v.x; velocity_y = v.y; velocity_z = v.z; }
     void setRadiusChangeSpeed(Rational s)     { m_radiusChangeSpeed = s; }
 
     const model::Action& action() const       { return m_action; }
