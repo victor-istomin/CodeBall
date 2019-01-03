@@ -84,6 +84,7 @@ public:
         m_isMoveCommitted = true;
     }
 
+    bool isBallAtStartPos() const;
     bool isMoveCommitted() const         { return m_isMoveCommitted; }
     bool isNewRound() const              { return m_isNewRound; }
     int  roundLocalTick() const          { return m_game->current_tick - m_roundStartTick; }

@@ -14,8 +14,7 @@ class TakeBallPair : public Goal
 
     int m_lastTick = TICK_NONE;
 
-    bool isLastTick() const;
-    bool isFinished() const;
+    bool isBallReached();
 
     std::optional<State::PredictedJumpHeight> jumpPrediction(double desiredHeight) const;
 

@@ -14,17 +14,16 @@ struct Always { bool operator()() const { return true; } };
 TakeBallPair::TakeBallPair(State& state, GoalManager& goalManager)
     : Goal(state, goalManager)
 {
-    pushBackStep([this]() { return this->isFinished(); }, Always()/*proceed*/, [this]() { return this->rushIntoBall(); }, "rushIntoBall");
+    pushBackStep([this]() { return this->isBallReached(); }, 
+                  Always()/*proceed*/, 
+                 [this]() { return this->rushIntoBall(); }, "rushIntoBall");
 }
 
 TakeBallPair::~TakeBallPair()
 {
 }
 
-// #todo - move to MathUtils.h
-
-
-Goal::StepStatus goals::TakeBallPair::rushIntoBall()
+Goal::StepStatus TakeBallPair::rushIntoBall()
 {
     Entity<model::Ball>  ball  = state().game().ball;
     Entity<model::Robot> me    = state().me();
@@ -36,7 +35,8 @@ Goal::StepStatus goals::TakeBallPair::rushIntoBall()
     Vec2d directionXZ    = linalg::normalize(displacementXZ);
 
     double shorten = linalg::length(displacementXZ) / (linalg::length(displacementXZ) - rules.BALL_RADIUS - rules.ROBOT_MIN_RADIUS);
-    displacementXZ /= shorten;    // #todo - leads to incorrect approachTimeTics in case of distance is very small
+    if(shorten > 1)
+        displacementXZ /= shorten;
 
     Vec2d meVelocityXZ   = Vec2d{ me.velocity().x, me.velocity().z };
     Vec2d ballVelocityXZ = Vec2d{ ball.velocity().x, ball.velocity().z };
@@ -98,13 +98,11 @@ Goal::StepStatus goals::TakeBallPair::rushIntoBall()
     return StepStatus::Ok;
 }
 
-bool goals::TakeBallPair::isLastTick() const
+bool TakeBallPair::isBallReached()
 {
-    return m_lastTick != TICK_NONE && state().game().current_tick == m_lastTick;
-}
+    if(m_lastTick == TICK_NONE && !state().isBallAtStartPos())
+        m_lastTick = state().game().current_tick;    // in case if enemy or teammate has reached the ball
 
-bool goals::TakeBallPair::isFinished() const
-{
     return m_lastTick != TICK_NONE && state().game().current_tick > m_lastTick;
 }
 

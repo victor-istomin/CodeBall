@@ -19,8 +19,6 @@ void State::updateState(const model::Robot& me, const model::Rules& rules, const
     m_game   = &game;
     m_action = &action;
 
-    bool isBallAtStartPos = game.ball.x == 0 && game.ball.z == 0 && game.ball.velocity_x == 0 && game.ball.velocity_z == 0;
-
     Score score = { game.players[0].score, game.players[1].score };
     if(!game.players[0].me)
         std::swap(score.first, score.second);
@@ -29,11 +27,16 @@ void State::updateState(const model::Robot& me, const model::Rules& rules, const
     if(isGoal && game.current_tick > m_roundStartTick)
         m_roundStartTick = game.current_tick + rules.RESET_TICKS;
 
-    m_isNewRound = isGoal && isBallAtStartPos;
-    if(isBallAtStartPos)
+    m_isNewRound = isGoal && isBallAtStartPos();
+    if(isBallAtStartPos())
         m_score = score;
 
     m_isMoveCommitted = false;
+}
+
+bool State::isBallAtStartPos() const
+{
+    return m_game->ball.x == 0 && m_game->ball.z == 0 && m_game->ball.velocity_x == 0 && m_game->ball.velocity_z == 0;
 }
 
 void State::saveBallPos(int tick, Vec3d&& pos, Vec3d&& velocity)

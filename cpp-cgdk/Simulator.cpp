@@ -25,9 +25,6 @@ Simulator::Dan Simulator::dan_to_arena_quarter(const Vec3d& point)
     const Plane ceiling = { Vec3d{ 0, arena.height, 0 }, Vec3d{ 0, -1, 0 } };
     const Plane sideX = { Vec3d{arena.width / 2, 0, 0}, Vec3d{-1, 0 , 0} };
     const Plane goalZ = { Vec3d{0, 0, (arena.depth / 2) + arena.goal_depth}, Vec3d{0, 0, -1} };
-    const Plane sideZ = { Vec3d{0, 0, (arena.depth / 2)}, Vec3d{0, 0, -1} };
-    const Plane goalX = { Vec3d{arena.goal_width / 2, 0, 0}, Vec3d{-1, 0, 0} };
-    const Plane goalY = { Vec3d{0, arena.goal_height, 0}, Vec3d{0, -1, 0} };
 
     Dan dan = std::min({
             dan_to_plane(point, ground),
@@ -45,12 +42,16 @@ Simulator::Dan Simulator::dan_to_arena_quarter(const Vec3d& point)
         || (pointXY.y >= arena.goal_height + arena.goal_side_radius)
         || (vz.x > 0 && vz.y > 0 && linalg::length(vz) >= arena.goal_top_radius + arena.goal_side_radius))
     {
+        const Plane sideZ = { Vec3d{0, 0, (arena.depth / 2)}, Vec3d{0, 0, -1} };
         dan = std::min(dan, dan_to_plane(point, sideZ));
     }
 
     // side X & ceiling (goal)
     if(point.z >= ((arena.depth / 2) + arena.goal_side_radius))
     {
+        const Plane goalX = { Vec3d{arena.goal_width / 2, 0, 0}, Vec3d{-1, 0, 0} };
+        const Plane goalY = { Vec3d{0, arena.goal_height, 0}, Vec3d{0, -1, 0} };
+
         dan = std::min({ dan,
             dan_to_plane(point, goalX),
             dan_to_plane(point, goalY),
