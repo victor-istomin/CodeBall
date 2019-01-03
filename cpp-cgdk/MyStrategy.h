@@ -35,6 +35,8 @@ public:
 
     virtual std::string custom_rendering() override { return m_renderHint; }
 
+private:
+    void initJumpPredictions();
 };
 
 #endif

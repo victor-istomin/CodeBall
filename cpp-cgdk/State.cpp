@@ -30,8 +30,6 @@ void State::updateState(const model::Robot& me, const model::Rules& rules, const
         m_score = score;
 
     m_isMoveCommitted = false;
-
-    m_ballPrediction.resize(0);    // resize will not reduce capacity
 }
 
 void State::saveBallPos(int tick, Vec3d&& pos, Vec3d&& velocity)
@@ -51,4 +49,14 @@ std::optional<State::PredictedPos> State::predictedBallPos(int tick) const
         return *found;
 
     return std::nullopt;
+}
+
+void State::invalidateBallPredictions()
+{
+    m_ballPrediction.resize(0);    // resize will not reduce capacity
+}
+
+void State::saveJumpPrediction(int tick, double initialSpeed, Vec3d&& pos, Vec3d&& velocity)
+{
+    m_jumpPredictions.push_back(PredictedJumpHeight{ tick, initialSpeed, std::forward<Vec3d>(pos), std::forward<Vec3d>(velocity) });
 }

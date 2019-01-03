@@ -27,6 +27,22 @@ public:
         PredictedPos(int tick, Vec3d&& pos, Vec3d&& velocity) : m_tick(tick), m_pos(pos), m_velocity(velocity) {}
     };
 
+    struct PredictedJumpHeight
+    {
+        double m_height       = 0;
+        double m_initialSpeed = 0;
+        double m_timeToReach  = 0;
+        double m_velocity_y   = 0;
+
+        PredictedJumpHeight(int tick, double initialSpeed, Vec3d&& pos, Vec3d&& velocity)
+            : m_height(pos.y)
+            , m_initialSpeed(initialSpeed)
+            , m_timeToReach(tick)
+            , m_velocity_y(velocity.y)
+        {
+        }
+    };
+
 private:
     using Score = std::pair<int/*mine*/, int/*their*/>;
 
@@ -39,7 +55,8 @@ private:
     bool m_isMoveCommitted = false;
     bool m_isNewRound      = false;
 
-    std::vector<PredictedPos> m_ballPrediction;
+    std::vector<PredictedPos>        m_ballPrediction;
+    std::vector<PredictedJumpHeight> m_jumpPredictions;
 
 public:
     State();
@@ -54,6 +71,11 @@ public:
 
     void saveBallPos(int tick, Vec3d&& pos, Vec3d&& velocity);
     std::optional<PredictedPos> predictedBallPos(int tick) const;
+    void invalidateBallPredictions();
+
+    void saveJumpPrediction(int tick, double initialSpeed, Vec3d&& pos, Vec3d&& velocity);
+    const std::vector<PredictedJumpHeight>& jumpPredictions() const { return m_jumpPredictions; }
+    
 
     void commitAction(const model::Action& a) 
     { 

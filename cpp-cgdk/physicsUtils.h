@@ -44,7 +44,11 @@ namespace uniform_accel     // uniform acceleration movement
             double rd = std::sqrt(D);
             double x1 = (-v0 + rd) / a;
             double x2 = (-v0 - rd) / a;
-            return x1 >= 0 ? x1 : x2;
+
+            double min = std::min(x1, x2);
+            double max = std::max(x1, x2);
+
+            return min > 0 ? min : max;
         }
 
         return v0 != 0 ? (s / v0) : std::numeric_limits<Rational>::max();
