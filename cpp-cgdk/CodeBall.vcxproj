@@ -251,6 +251,7 @@
       <ConformanceMode Condition="'$(Configuration)|$(Platform)'=='Debug_optimized|Win32'">false</ConformanceMode>
     </ClCompile>
     <ClCompile Include="goal.cpp" />
+    <ClCompile Include="GoalAttackSingle.cpp" />
     <ClCompile Include="goalManager.cpp" />
     <ClCompile Include="GoalTakeBallPair.cpp" />
     <ClCompile Include="MyStrategy.cpp">
@@ -294,8 +295,10 @@
     <ClInclude Include="csimplesocket\StatTimer.h" />
     <ClInclude Include="Entity.h" />
     <ClInclude Include="goal.h" />
+    <ClInclude Include="GoalAttackSingle.h" />
     <ClInclude Include="goalManager.h" />
     <ClInclude Include="GoalTakeBallPair.h" />
+    <ClInclude Include="goalUtils.h" />
     <ClInclude Include="linalg.h" />
     <ClInclude Include="model\Action.h" />
     <ClInclude Include="model\Arena.h" />

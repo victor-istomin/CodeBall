@@ -3,13 +3,12 @@
 #include "State.h"
 #include "Simulator.h"
 #include "physicsUtils.h"
+#include "goalUtils.h"
 
 using namespace goals;
 using Vec2d = Simulator::Vec2d;
 using Vec3d = Simulator::Vec3d;
 
-struct Never  { bool operator()() const { return false; } };
-struct Always { bool operator()() const { return true; } };
 
 TakeBallPair::TakeBallPair(State& state, GoalManager& goalManager)
     : Goal(state, goalManager)
@@ -42,9 +41,6 @@ Goal::StepStatus TakeBallPair::rushIntoBall()
     Vec2d ballVelocityXZ = Vec2d{ ball.velocity().x, ball.velocity().z };
     double approachSpeed = linalg::dot(meVelocityXZ, directionXZ) - linalg::dot(ballVelocityXZ, directionXZ);
     double maxApproachSpeed = rules.ROBOT_MAX_GROUND_SPEED - linalg::dot(ballVelocityXZ, directionXZ);
-
-    // #todo_r2 - nitro support
-    const double acceleration = approachSpeed < maxApproachSpeed ? (rules.ROBOT_ACCELERATION / rules.TICKS_PER_SECOND) : 0;
 
     double distanceXZ = linalg::length(displacementXZ);
     double approachTimeSecs = uniform_accel::distanceToTime(distanceXZ, rules.ROBOT_ACCELERATION, approachSpeed, maxApproachSpeed); // #todo st.2 - nitro

@@ -22,6 +22,11 @@ namespace std
     {
         return "(" + std::to_string(v.x) + "; " + std::to_string(v.y) + "; " + std::to_string(v.z) + ")";
     }
+
+    std::string to_string(const std::string& s)
+    {
+        return s;
+    }
 }
 
 void MyStrategy::act(const Robot& me, const Rules& rules, const Game& game, Action& action)
@@ -50,7 +55,7 @@ void MyStrategy::act(const Robot& me, const Rules& rules, const Game& game, Acti
         for(const Robot& r : game.robots)
             simRobots.emplace_back(r);
 
-        constexpr int SIM_TICKS = 50;
+        constexpr int SIM_TICKS = 60;
         int simUntil  = game.current_tick + SIM_TICKS;
         int ghostTick = (game.current_tick / SIM_TICKS * SIM_TICKS) + SIM_TICKS;
         const double tickTime = 1.0 / rules.TICKS_PER_SECOND;
@@ -86,8 +91,7 @@ void MyStrategy::act(const Robot& me, const Rules& rules, const Game& game, Acti
 void MyStrategy::debugRender(int ghostTick, const model::Game& game, double lastSimMs)
 {
 #ifdef DEBUG_RENDER
-    std::string s = R"(
-    [
+    std::string sphereTemplate = R"(
       {
         "Sphere": {
           "x": %x,
@@ -97,9 +101,14 @@ void MyStrategy::debugRender(int ghostTick, const model::Game& game, double last
           "r": 0.0,
           "g": 1.0,
           "b": 1.0,
-          "a": 0.5
+          "a": 0.25
         }
       },
+)";
+
+    std::string s = R"(
+    [
+      %spheres
       {
         "Text": "p. tick: %pt, act. tick: %at, last sim time: %lst, avg. sim time: %ast"
       },
@@ -136,6 +145,19 @@ void MyStrategy::debugRender(int ghostTick, const model::Game& game, double last
 
     auto predictedPos = m_state->predictedBallPos(ghostTick);
 
+    std::string spheres;
+    spheres.reserve(1024);
+    for(const State::PredictedPos& pos : m_state->ballPredictions())
+    {
+        std::string next = sphereTemplate;
+
+        format(next, "%x", pos.m_pos.x);
+        format(next, "%y", pos.m_pos.y);
+        format(next, "%z", pos.m_pos.z);
+
+        spheres += next;
+    }
+
     using EntityBall = Entity<Ball>;
     EntityBall simBall = m_state->game().ball;
     if (predictedPos.has_value())
@@ -144,9 +166,11 @@ void MyStrategy::debugRender(int ghostTick, const model::Game& game, double last
         simBall.setVelocity(predictedPos->m_velocity);
     }
 
-    format(s, "%x", simBall.x);
-    format(s, "%y", simBall.y);
-    format(s, "%z", simBall.z);
+//     format(s, "%x", simBall.x);
+//     format(s, "%y", simBall.y);
+//     format(s, "%z", simBall.z);
+
+    format(s, "%spheres", spheres);
 
     format(s, "%pt", ghostTick);
     format(s, "%at", game.current_tick);

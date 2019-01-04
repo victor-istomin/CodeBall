@@ -72,6 +72,7 @@ public:
 
     void saveBallPos(int tick, Vec3d&& pos, Vec3d&& velocity);
     std::optional<PredictedPos> predictedBallPos(int tick) const;
+    const std::vector<PredictedPos>& ballPredictions() const        { return m_ballPrediction; }
     void invalidateBallPredictions();
 
     void saveJumpPrediction(int tick, double initialSpeed, Vec3d&& pos, Vec3d&& velocity);
