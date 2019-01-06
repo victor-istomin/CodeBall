@@ -33,6 +33,18 @@ public:
     using Vec3d = linalg::vec<Rational, 3>;
     using Vec2d = linalg::vec<Rational, 2>;
 
+    struct CollisionFlags
+    {
+        bool ball : 1;
+        bool robots : 1;
+
+        CollisionFlags() : ball(false), robots(false) {}
+
+        void apply(CollisionFlags&& other)            { ball = ball || other.ball; robots = robots || other.robots; }
+
+        operator bool() const                         { return ball && robots; }
+    };
+
 private:
     const model::Rules m_rules;
     std::mt19937       m_rng;
@@ -67,7 +79,6 @@ private:
     static Dan dan_to_sphere_outer(const Vec3d& point, const Sphere& sphere);
 
     Dan dan_to_arena_quarter(const Vec3d& point);
-    Dan dan_to_arena(Vec3d point);
 
     // returns normal
     template <typename EntityType>
@@ -101,11 +112,12 @@ private:
     }
 
     template <typename LeftEntity, typename RightEntity>
-    void collide_entities(LeftEntity& a, RightEntity& b)
+    bool collide_entities(LeftEntity& a, RightEntity& b)
     {
-        Vec3d    delta_pos = b.position() - a.position();
-        Rational distance = linalg::length(delta_pos);
+        Vec3d    delta_pos   = b.position() - a.position();
+        Rational distance    = linalg::length(delta_pos);
         Rational penetration = a.radius + b.radius - distance;
+        bool     isCollided  = false;
 
         if(penetration > 0)
         {
@@ -121,13 +133,17 @@ private:
 
             Rational delta_v = linalg::dot(b.velocity() - a.velocity(), normal) - b.radiusChangeSpeed() - a.radiusChangeSpeed();
 
-            if(delta_v < 0)   // #todo - why < 0?
+            if(delta_v < 0)
             {
                 Vec3d impulse = (1 + random(m_rules.MIN_HIT_E, m_rules.MAX_HIT_E)) * delta_v * normal;
                 a.setVelocity(a.velocity() + impulse * k_a);
                 b.setVelocity(b.velocity() - impulse * k_b);
             }
+
+            isCollided = true;
         }
+
+        return isCollided;
     }
 
     std::vector<Entity<model::Robot>*> m_robotPointersBuffer;   // singe-threaded environment only, this avoid a lot of new's when calling update for many microtics
@@ -142,7 +158,8 @@ public:
         m_robotPointersBuffer.reserve(8);
     }
 
-    void update(std::vector<Entity<model::Robot>>& robots, Entity<model::Ball>& ball, Rational delta_time);
+    CollisionFlags update(std::vector<Entity<model::Robot>>& robots, Entity<model::Ball>& ball, Rational delta_time);
+    Dan dan_to_arena(Vec3d point);
 
 
     Rational random(double min, double max) { return (min + max) / 2; }  // #todo - random

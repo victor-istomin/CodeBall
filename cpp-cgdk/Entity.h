@@ -24,6 +24,7 @@ public:
     Entity()              = default;
     Entity(const Entity&) = default;
     Entity(Entity&&)      = default;
+    Entity& operator=(const Entity&) = default;
 
     Entity(const Type& copy) : Entity()       { *this = copy; }
     Entity(Type&& copy) : Entity()            { *this = std::forward<Type&&>(copy); }

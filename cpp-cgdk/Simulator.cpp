@@ -298,9 +298,10 @@ Simulator::Dan Simulator::dan_to_arena(Vec3d point)
     return results;
 }
 
-void Simulator::update(std::vector<Entity<model::Robot>>& robots, Entity<model::Ball>& ball, Rational delta_time)
+Simulator::CollisionFlags Simulator::update(std::vector<Entity<model::Robot>>& robots, Entity<model::Ball>& ball, Rational delta_time)
 {
     m_robotPointersBuffer.resize(0);   // resize() ensures that capacity is never reduced
+    CollisionFlags collisions; 
 
     std::transform(robots.begin(), robots.end(), std::back_inserter(m_robotPointersBuffer), [](Entity<model::Robot>& r) { return &r; });
     std::shuffle(m_robotPointersBuffer.begin(), m_robotPointersBuffer.end(), m_rng);
@@ -348,17 +349,20 @@ void Simulator::update(std::vector<Entity<model::Robot>>& robots, Entity<model::
 
     for(int i = 0; i < (int)robots.size(); ++i)
         for(int j = 0; j < i - 1; ++j)
-            collide_entities(robots[i], robots[j]);
+            if(collide_entities(robots[i], robots[j]))
+                collisions.robots = true;
 
     for(Entity<model::Robot>& robot : robots)
     {
-        collide_entities(robot, ball);
+        if(collide_entities(robot, ball))
+            collisions.ball = collisions.robots = true;
 
         std::optional<Vec3d> collisionNormal = collide_with_arena(robot);
         if(collisionNormal.has_value())
         {
             robot.touch = true;
             robot.setTouchNormal(*collisionNormal);
+            collisions.robots = true;
         }
         else
         {
@@ -366,11 +370,14 @@ void Simulator::update(std::vector<Entity<model::Robot>>& robots, Entity<model::
         }
     }
 
-    collide_with_arena(ball);
+    if(collide_with_arena(ball).has_value())
+        collisions.ball = true;
 
     // #todo - goal callback
     // if (abs(ball.position.z) > arena.depth / 2 + ball.radius)
     //     goal_scored();
 
     // #todo - nitro packs
+
+    return collisions;
 }

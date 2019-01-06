@@ -7,12 +7,12 @@
 
 #include "Strategy.h"
 #include "state.h"
+#include "Simulator.h"
 
 #include <memory>
 
 class QuickStart_MyStrategy;
 class GoalManager;
-class Simulator;
 
 template <typename T> class Entity;
 
@@ -30,6 +30,10 @@ public:
     MyStrategy();
 
     virtual void act(const model::Robot& me, const model::Rules& rules, const model::Game& world, model::Action& action) override;
+
+    void simulateBallPos(const model::Game &game, const int simFrom, const int simUntil);
+
+    Simulator::CollisionFlags simulateTick(const double tickTime, int microticksCount, std::vector<Entity<model::Robot>>& simRobots, Entity<model::Ball>& simBall);
 
     void debugRender(int ghostTick, const model::Game& game, double lastSimMs);
 
