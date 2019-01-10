@@ -250,6 +250,7 @@
       <ConformanceMode Condition="'$(Configuration)|$(Platform)'=='Debug_fast|Win32'">false</ConformanceMode>
       <ConformanceMode Condition="'$(Configuration)|$(Platform)'=='Debug_optimized|Win32'">false</ConformanceMode>
     </ClCompile>
+    <ClCompile Include="DebugRender.cpp" />
     <ClCompile Include="goal.cpp" />
     <ClCompile Include="GoalAttackSingle.cpp" />
     <ClCompile Include="goalManager.cpp" />
@@ -293,6 +294,7 @@
     <ClInclude Include="csimplesocket\PassiveSocket.h" />
     <ClInclude Include="csimplesocket\SimpleSocket.h" />
     <ClInclude Include="csimplesocket\StatTimer.h" />
+    <ClInclude Include="DebugRender.h" />
     <ClInclude Include="Entity.h" />
     <ClInclude Include="goal.h" />
     <ClInclude Include="GoalAttackSingle.h" />
@@ -352,6 +354,7 @@
     <ClInclude Include="Simulator.h" />
     <ClInclude Include="State.h" />
     <ClInclude Include="Strategy.h" />
+    <ClInclude Include="stringUtils.h" />
     <ClInclude Include="Tests.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

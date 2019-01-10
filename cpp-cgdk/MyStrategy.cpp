@@ -2,10 +2,12 @@
 #include "QuickStart_MyStrategy.h"
 #include "Simulator.h"
 #include "goalManager.h"
+#include "DebugRender.h"
 
 #include <chrono>
 #include <sstream>
 #include "tests.h"
+#include "stringUtils.h"
 
 using namespace model;
 
@@ -17,18 +19,7 @@ MyStrategy::MyStrategy()
 {
 }
 
-namespace std
-{
-    std::string to_string(const Simulator::Vec3d& v)
-    {
-        return "(" + std::to_string(v.x) + "; " + std::to_string(v.y) + "; " + std::to_string(v.z) + ")";
-    }
 
-    std::string to_string(const std::string& s)
-    {
-        return s;
-    }
-}
 
 void MyStrategy::act(const Robot& me, const Rules& rules, const Game& game, Action& action)
 {
@@ -166,92 +157,23 @@ Simulator::CollisionFlags MyStrategy::simulateTick(const double tickTime, int mi
 void MyStrategy::debugRender(int ghostTick, const model::Game& game, double lastSimMs)
 {
 #ifdef DEBUG_RENDER
-    std::string sphereTemplate = R"(
-      {
-        "Sphere": {
-          "x": %x,
-          "y": %y,
-          "z": %z,
-          "radius": 2,
-          "r": 0.0,
-          "g": 1.0,
-          "b": 1.0,
-          "a": 0.25
-        }
-      },
-)";
+    DebugRender& render = DebugRender::instance();
 
-    std::string s = R"(
-    [
-      %spheres
-      {
-        "Text": "p. tick: %pt, act. tick: %at, last sim time: %lst, avg. sim time: %ast, avg %apst per tick"
-      },
-      {
-        "Text": "Sphere x: %x, y: %y, z: %z,    p. velocity: %prv"
-      },
-      {
-        "Text": "act. ball pos: %acp,    act. ball v: %acv"
-      },
-      {
-        "Text": "act. team#0 pos: %a0p,    act. team#0 v: %a0v"
-      },
-      {
-        "Text": "act. team#1 pos: %a1p,    act. team#1 v: %a1v"
-      },
-      {
-        "Text": "act. enemy#0 pos: %a2p,    act. enemy#0 v: %a2v"
-      },
-      {
-        "Text": "act. enemy#1 pos: %a3p,    act. enemy#1 v: %a3v"
-      }
-    ])";
-
-    auto format = [](std::string& s, const std::string& spec, const auto& value)
-    {
-        auto pos = s.find(spec);
-        auto val = std::to_string(value);
-        while(pos != std::string::npos)
-        {
-            s.replace(pos, spec.size(), val);
-            pos = s.find(spec);
-        }
-    };
-
-    auto predictedPos = m_state->predictedBallPos(ghostTick);
-
-    std::string spheres;
-    spheres.reserve(1024);
     for(const State::PredictedPos& pos : m_state->ballPredictions())
-    {
-        std::string next = sphereTemplate;
+        render.shpere(pos.m_pos, m_state->rules().BALL_RADIUS, DebugRender::RGB_BALL_PREDICTED);
 
-        format(next, "%x", pos.m_pos.x);
-        format(next, "%y", pos.m_pos.y);
-        format(next, "%z", pos.m_pos.z);
+    render.text(FormattedString(R"(p. tick: %pt, act. tick: %at, last sim time: %lst, avg. sim time: %ast, avg %apst per tick)")
+        .format("%pt",   ghostTick)
+        .format("%at",   game.current_tick)
+        .format("%lst",  lastSimMs)
+        .format("%ast",  g_simCount == 0 ? 0 : (g_simDurationMs / g_simCount))
+        .format("%apst", g_simTicks == 0 ? 0 : (g_simDurationMs / g_simTicks))
+        .move());
 
-        spheres += next;
-    }
-
-    using EntityBall = Entity<Ball>;
-    EntityBall simBall = m_state->game().ball;
-    if (predictedPos.has_value())
-    {
-        simBall.setPosition(predictedPos->m_pos);
-        simBall.setVelocity(predictedPos->m_velocity);
-    }
-
-    format(s, "%spheres", spheres);
-
-    format(s, "%pt", ghostTick);
-    format(s, "%at", game.current_tick);
-    format(s, "%lst", lastSimMs);
-    format(s, "%ast", g_simCount == 0 ? 0 : (g_simDurationMs / g_simCount));
-    format(s, "%apst", g_simTicks == 0 ? 0 : (g_simDurationMs / g_simTicks));
-
-    format(s, "%prv", simBall.velocity());
-    format(s, "%acv", Entity<model::Ball>(game.ball).velocity());
-    format(s, "%acp", Entity<model::Ball>(game.ball).position());
+    render.text(FormattedString(R"(act. ball pos: %acp,    act. ball v: %acv)")
+        .format("%acv", Entity<model::Ball>(game.ball).velocity())
+        .format("%acp", Entity<model::Ball>(game.ball).position())
+        .move());
 
     std::vector<Robot> teammates;
     std::vector<Robot> enemies;
@@ -264,24 +186,35 @@ void MyStrategy::debugRender(int ghostTick, const model::Game& game, double last
     }
 
     std::sort(teammates.begin(), teammates.end(), [](const Robot& a, const Robot& b) {return a.id < b.id; });
-    std::sort(enemies.begin(), enemies.end(), [](const Robot& a, const Robot& b) {return a.id < b.id; });
+    std::sort(enemies.begin(), enemies.end(),     [](const Robot& a, const Robot& b) {return a.id < b.id; });
 
-    format(s, "%a0v", Entity<model::Robot>(teammates[0]).velocity());
-    format(s, "%a0p", Entity<model::Robot>(teammates[0]).position());
-    format(s, "%a1v", Entity<model::Robot>(teammates[1]).velocity());
-    format(s, "%a1p", Entity<model::Robot>(teammates[1]).position());
+    render.text(FormattedString(R"(act. team #0 pos: %t0p, v: %t0v, act. team #1 pos: %t1p, v: %t1v)")
+        .format("%t0v", Entity<model::Robot>(teammates[0]).velocity())
+        .format("%t0p", Entity<model::Robot>(teammates[0]).position())
+        .format("%t1v", Entity<model::Robot>(teammates[1]).velocity())
+        .format("%t1p", Entity<model::Robot>(teammates[1]).position())
+        .move());
 
-    format(s, "%a2v", Entity<model::Robot>(enemies[0]).velocity());
-    format(s, "%a2p", Entity<model::Robot>(enemies[0]).position());
-    format(s, "%a3v", Entity<model::Robot>(enemies[1]).velocity());
-    format(s, "%a3p", Entity<model::Robot>(enemies[1]).position());
+    render.text(FormattedString(R"(act. enemy #0 pos: %e0p, v: %e0v, act. enemy #1 pos: %e1p, v: %e1v)")
+        .format("%e0v", Entity<model::Robot>(enemies[0]).velocity())
+        .format("%e0p", Entity<model::Robot>(enemies[0]).position())
+        .format("%e1v", Entity<model::Robot>(enemies[1]).velocity())
+        .format("%e1p", Entity<model::Robot>(enemies[1]).position())
+        .move());
 
-    m_renderHint = std::move(s);
 #else    // #ifdef DEBUG_RENDER
-    m_renderHint.clear();
 #endif   // #ifdef DEBUG_RENDER
 }
 
+
+std::string MyStrategy::custom_rendering()
+{
+#ifdef DEBUG_RENDER
+    if(DebugRender::instance().isEnabled())
+        return DebugRender::instance().commit();
+#endif
+    return {};
+}
 
 void MyStrategy::initJumpPredictions()
 {

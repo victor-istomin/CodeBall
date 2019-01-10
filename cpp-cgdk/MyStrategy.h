@@ -24,7 +24,6 @@ class MyStrategy : public Strategy
     //std::unique_ptr<QuickStart_MyStrategy> m_qsGuy;   // might be used for simulation
 
     int         m_lastSimTick = -1;
-    std::string m_renderHint;
 
 public:
     MyStrategy();
@@ -37,7 +36,7 @@ public:
 
     void debugRender(int ghostTick, const model::Game& game, double lastSimMs);
 
-    virtual std::string custom_rendering() override { return m_renderHint; }
+    virtual std::string custom_rendering() override;
 
 private:
     void initJumpPredictions();
