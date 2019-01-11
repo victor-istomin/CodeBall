@@ -35,7 +35,8 @@ public:
         bool            m_isMultitaskPoint;
 
         Step(CallbackBool shouldAbort, CallbackBool shouldProceed, CallbackStatus proceed, const char* debugName = nullptr, StepType type = StepType::ATOMIC)
-            : m_shouldAbort(shouldAbort), m_shouldProceed(shouldProceed), m_proceed(proceed), m_debugName(debugName)
+            : m_debugName(debugName)
+            , m_shouldAbort(shouldAbort), m_shouldProceed(shouldProceed), m_proceed(proceed)
             , m_isMultitaskPoint(type == StepType::ALLOW_MULTITASK)
         {}
     };

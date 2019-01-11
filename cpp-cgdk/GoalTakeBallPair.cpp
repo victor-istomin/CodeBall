@@ -73,7 +73,7 @@ Goal::StepStatus TakeBallPair::rushIntoBall()
         if(predictedJump.has_value() && std::abs(predictedJump->m_height - desiredHeight) < ACCURACY_THRESHOLD)
         {
             double ticksToLift = predictedJump->m_timeToReach;
-            double ticksToLift2 = uniform_accel::distanceToTime(desiredHeight - me.radius, -rules.GRAVITY, rules.ROBOT_MAX_JUMP_SPEED) * rules.TICKS_PER_SECOND;
+            //double ticksToLift2 = uniform_accel::distanceToTime(desiredHeight - me.radius, -rules.GRAVITY, rules.ROBOT_MAX_JUMP_SPEED) * rules.TICKS_PER_SECOND;
             if(ticksToLift > approachTimeTics)
             {
                 action.jump_speed = state().rules().ROBOT_MAX_JUMP_SPEED;

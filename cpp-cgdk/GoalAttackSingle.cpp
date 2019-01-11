@@ -155,7 +155,7 @@ Goal::StepStatus AttackSingle::reachAttackPos()
     const model::Rules& rules = state().rules();
 
     Entity<model::Robot> me = state().me();
-    Entity<model::Ball>  ball = state().game().ball;
+    Entity<model::Ball>  ball = game.ball;
 
 
     auto itFound = std::find_if(predictions.begin(), predictions.end(), [this](const State::PredictedPos& prediction) {
