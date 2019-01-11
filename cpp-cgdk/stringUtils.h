@@ -48,3 +48,5 @@ public:
     std::string&& move() { return std::move(m_result); }
 };
 
+inline FormattedString operator "" _fs(const char* begin, std::size_t size) { return FormattedString(std::string{ begin, size }); }
+

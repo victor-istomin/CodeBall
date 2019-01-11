@@ -3,6 +3,8 @@
 #include "State.h"
 #include "noReleaseAssert.h"
 #include "physicsUtils.h"
+#include "DebugRender.h"
+#include "stringUtils.h"
 
 using namespace goals;
 using namespace model;
@@ -11,7 +13,7 @@ using namespace model;
 AttackSingle::AttackSingle(State& state, GoalManager& goalManager)
     : Goal(state, goalManager)
 {
-    pushBackStep(Never{},                           // abort if
+    pushBackStep([this]() {return isGoalDone(); },  // abort if
                  Always{},                          // proceed if
                  [this]() {return repeat(); },
                  "repeat");
@@ -24,22 +26,22 @@ AttackSingle::~AttackSingle()
 
 Goal::StepStatus AttackSingle::repeat()
 {
-    pushBackStep(Never{},                                 // abort if
+    pushBackStep([this]() {return isGoalDone(); },        // abort if
                  Always{},                                // proceed if
                  [this]() {return assignAttackerId(); },
                  "assignAttackerId");
 
-    pushBackStep(Never{},                                              // abort if
+    pushBackStep([this]() {return isGoalDone(); },                     // abort if
                  [this]() {return isAttackPhase() && canMove(); },     // proceed if
                  [this]() {return findAttackPos(); },
                  "findAttackPos");
 
-    pushBackStep(Never{},                                              // abort if
+    pushBackStep([this]() {return isGoalDone(); },                     // abort if
                  [this]() {return isAttackPhase() && canMove(); },     // proceed if
                  [this]() {return reachAttackPos(); },
                  "reachAttackPos");
 
-    pushBackStep(Never{},                                 // abort if
+    pushBackStep([this]() {return isGoalDone(); },        // abort if
                  Always{},                                // proceed if
                  [this]() {return repeat(); },
                  "repeat");
@@ -54,7 +56,11 @@ bool AttackSingle::isAttacker() const
 
 bool AttackSingle::isAttackPhase() const
 {
-    return isAttacker() && state().me().z <= state().game().ball.z;    // ball is between attacker and enemy gates
+    const model::Robot& me = state().me();
+    const model::Ball& ball = state().game().ball;
+
+    return isAttacker() 
+        && ((me.z > 0 && ball.z > 0) || me.z <= ball.z);    // we are on enemy side or the ball is between attacker and enemy gates
 }
 
 bool AttackSingle::canMove() const
@@ -90,18 +96,27 @@ Goal::StepStatus AttackSingle::findAttackPos()
     const model::Game& game = state().game();
     const model::Rules& rules = state().rules();
 
+    int meetingTick = std::numeric_limits<int>::max();
     for(const State::PredictedPos& prediction : predictions)
     {
         const double thresholdY = rules.BALL_RADIUS + rules.ROBOT_MIN_RADIUS / 2;    // #todo - jump support
         if(prediction.m_tick < game.current_tick || prediction.m_pos.y > thresholdY)
             continue;
 
-        int meetingTick = game.current_tick + ticksToReach(prediction.m_pos);
+        meetingTick = game.current_tick + ticksToReach(prediction.m_pos);
         if(meetingTick > prediction.m_tick)
             continue;
 
-        m_attackPos = prediction.m_pos;
+        m_attackPos = prediction.m_pos;              // #todo after goalkeeper: don't use exact ball pos!
+        break;
     }
+
+    DebugRender::instance().shpere(m_attackPos, rules.BALL_RADIUS + .1, { 1, 0, 0, .25 });
+    DebugRender::instance().text(R"(attack by #%id pos: %pos, tick: %tick)"_fs
+        .format("%id", state().me().id)
+        .format("%pos", m_attackPos)
+        .format("%tick", meetingTick)
+        .move());
 
     return m_attackPos != Vec3d{} ? StepStatus::Done : StepStatus::Ok;
 }
@@ -172,5 +187,10 @@ Goal::StepStatus AttackSingle::reachAttackPos()
 
     state().commitAction(action);
     return action.jump_speed == 0 ? StepStatus::Ok : StepStatus::Done;
+}
+
+bool goals::AttackSingle::isGoalDone() const
+{
+    return state().isChilloutPhase();
 }
 

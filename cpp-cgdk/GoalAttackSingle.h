@@ -13,6 +13,7 @@ class AttackSingle : public Goal
     bool isAttacker() const;
     bool canMove() const;
     bool isAttackPhase() const;
+    bool isGoalDone() const;
 
     StepStatus assignAttackerId();
     StepStatus findAttackPos();

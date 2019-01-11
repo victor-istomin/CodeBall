@@ -15,7 +15,7 @@ std::string DebugRender::commitImpl()
         "b": %blue,
         "a": %alpha
       }
-    },)";
+    })";
 
     static const std::string textTemplate = R"(
     {
@@ -46,17 +46,18 @@ std::string DebugRender::commitImpl()
             .format("%blue",  sphere.color[2])
             .format("%alpha", sphere.color[3]);
 
+        spheres += spheres.empty() ? "" : ",";
         spheres += next.get();
     }
 
     std::string texts;
     texts.reserve(m_strings.size() * 128);
-
+    spheres += (spheres.empty() || m_strings.empty()) ? "" : ",";
     for(const std::string& s : m_strings)
     {
         std::string next = textTemplate;
-        texts += texts.empty() ? "" : ",\n";
-        texts += format(next, "%string", s);
+        texts   += texts.empty() ? "" : ",";
+        texts   += format(next, "%string", s);
     }
 
     FormattedString packet = packetTemplate;

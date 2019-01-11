@@ -36,7 +36,7 @@ public:
 
 #else
     DebugRender& text(std::string&&)                           { return *this; }
-    DebugRender& shpere(Vec3d&&, double, Rgba)                 { return *this; }
+    DebugRender& shpere(const Vec3d&, double, Rgba)            { return *this; }
     std::string  commit()                                      { return {}; }
     bool         isEnabled() const                             { return false; }
 #endif
