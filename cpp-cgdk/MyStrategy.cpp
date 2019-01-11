@@ -6,7 +6,7 @@
 
 #include <chrono>
 #include <sstream>
-#include "tests.h"
+#include "Tests.h"
 #include "stringUtils.h"
 
 using namespace model;

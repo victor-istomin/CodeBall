@@ -6,7 +6,7 @@
 #define _MY_STRATEGY_H_
 
 #include "Strategy.h"
-#include "state.h"
+#include "State.h"
 #include "Simulator.h"
 
 #include <memory>

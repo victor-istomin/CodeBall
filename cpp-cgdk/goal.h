@@ -41,7 +41,6 @@ public:
     };
 
 private:
-    struct Step;
     typedef std::unique_ptr<Step> StepPtr;
 
     std::list<StepPtr> m_steps;

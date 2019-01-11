@@ -1,7 +1,7 @@
 #include "goalManager.h"
 #include "GoalTakeBallPair.h"
 #include "GoalAttackSingle.h"
-#include "state.h"
+#include "State.h"
 
 void GoalManager::fillCurrentGoals()
 {
