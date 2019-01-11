@@ -144,11 +144,14 @@ Goal::StepStatus AttackSingle::reachAttackPos()
     Vec2d meXZ = { me.position().x, me.position().z };
     Vec2d targetXZ = { m_attackPos.x, m_attackPos.z };
     Vec2d displacementXZ = targetXZ - meXZ;
-    Vec2d directionXZ = linalg::normalize(displacementXZ);
 
     double shorten = linalg::length(displacementXZ) / (linalg::length(displacementXZ) - rules.BALL_RADIUS - rules.ROBOT_MIN_RADIUS);
     if(shorten > 1)
         displacementXZ /= shorten;
+    else
+        displacementXZ /= shorten * 0.75;
+
+    Vec2d directionXZ = linalg::normalize(displacementXZ);
 
     double distance = linalg::length(displacementXZ);
     double needSpeedSI = distance / static_cast<double>(ticksToReach(m_attackPos, state())) * rules.TICKS_PER_SECOND;  // actually, not so SI: length units per second
