@@ -25,7 +25,7 @@ void State::updateState(const model::Robot& me, const model::Rules& rules, const
 
     bool isGoal = m_score != score;
     if(isGoal && game.current_tick > m_roundStartTick)
-        m_roundStartTick = game.current_tick + rules.RESET_TICKS;
+        m_roundStartTick = game.current_tick + rules.RESET_TICKS - 1;    // #todo : is it really -1?
 
     m_isNewRound = isGoal && isBallAtStartPos();
     if(isBallAtStartPos())

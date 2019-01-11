@@ -5,6 +5,7 @@
 #include "physicsUtils.h"
 #include "DebugRender.h"
 #include "stringUtils.h"
+#include "Simulator.h"
 
 using namespace goals;
 using namespace model;
@@ -65,8 +66,7 @@ bool AttackSingle::isAttackPhase() const
 
 bool AttackSingle::canMove() const
 {
-    return state().me().touch  // on ground
-        || state().me().nitro_amount > 0;
+    return canMoveImpl(state().me());
 }
 
 Goal::StepStatus AttackSingle::assignAttackerId()
@@ -103,7 +103,7 @@ Goal::StepStatus AttackSingle::findAttackPos()
         if(prediction.m_tick < game.current_tick || prediction.m_pos.y > thresholdY)
             continue;
 
-        meetingTick = game.current_tick + ticksToReach(prediction.m_pos);
+        meetingTick = game.current_tick + ticksToReach(prediction.m_pos, state());
         if(meetingTick > prediction.m_tick)
             continue;
 
@@ -119,33 +119,6 @@ Goal::StepStatus AttackSingle::findAttackPos()
         .move());
 
     return m_attackPos != Vec3d{} ? StepStatus::Done : StepStatus::Ok;
-}
-
-int AttackSingle::ticksToReach(const Vec3d& target) const
-{
-    Entity<model::Robot> me = state().me();
-    const model::Rules&  rules = state().rules();
-
-    Vec2d meXZ     = { me.position().x, me.position().z };
-    Vec2d targetXZ = { target.x, target.z };
-    Vec2d displacementXZ = targetXZ - meXZ;
-    Vec2d directionXZ    = linalg::normalize(displacementXZ);
-
-    double shorten = linalg::length(displacementXZ) / (linalg::length(displacementXZ) - rules.BALL_RADIUS - rules.ROBOT_MIN_RADIUS);
-    if(shorten > 1)
-        displacementXZ /= shorten;
-
-    Vec2d meVelocityXZ = Vec2d{ me.velocity().x, me.velocity().z };
-    double approachSpeed = linalg::dot(meVelocityXZ, directionXZ);
-    double maxApproachSpeed = rules.ROBOT_MAX_GROUND_SPEED;
-
-    double distanceXZ = linalg::length(displacementXZ);
-    double approachTimeSecs = uniform_accel::distanceToTime(distanceXZ, rules.ROBOT_ACCELERATION, approachSpeed, maxApproachSpeed); // #todo st.2 - nitro
-    double approachTimeTics = approachTimeSecs * rules.TICKS_PER_SECOND;
-
-    // #todo jump estimation support 
-
-    return static_cast<int>(std::ceil(approachTimeTics));
 }
 
 Goal::StepStatus AttackSingle::reachAttackPos()
@@ -175,7 +148,7 @@ Goal::StepStatus AttackSingle::reachAttackPos()
         displacementXZ /= shorten;
 
     double distance = linalg::length(displacementXZ);
-    double needSpeedSI = distance / static_cast<double>(ticksToReach(m_attackPos)) * rules.TICKS_PER_SECOND;  // actually, not so SI: length units per second
+    double needSpeedSI = distance / static_cast<double>(ticksToReach(m_attackPos, state())) * rules.TICKS_PER_SECOND;  // actually, not so SI: length units per second
     Vec2d targetSpeedXZ = directionXZ * needSpeedSI;
 
     Action action;
@@ -189,7 +162,7 @@ Goal::StepStatus AttackSingle::reachAttackPos()
     return action.jump_speed == 0 ? StepStatus::Ok : StepStatus::Done;
 }
 
-bool goals::AttackSingle::isGoalDone() const
+bool AttackSingle::isGoalDone() const
 {
     return state().isChilloutPhase();
 }

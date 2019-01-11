@@ -28,7 +28,7 @@ class Simulator
 {
 public:
     using Rational = double;
-    constexpr static Rational Epsilon = 1e-6;
+    constexpr static Rational k_Epsilon = 1e-6;
 
     using Vec3d = linalg::vec<Rational, 3>;
     using Vec2d = linalg::vec<Rational, 2>;
@@ -49,10 +49,10 @@ private:
     const model::Rules m_rules;
     std::mt19937       m_rng;
 
-    template <typename Unit> auto getMass(const Unit&)   -> std::enable_if_t<std::is_base_of_v<model::Robot, Unit>, Rational> { return m_rules.ROBOT_MASS; }
-    template <typename Unit> auto getMass(const Unit&)   -> std::enable_if_t<std::is_base_of_v<model::Ball,  Unit>, Rational> { return m_rules.BALL_MASS; }
-    template <typename Unit> auto getArenaE(const Unit&) -> std::enable_if_t<!std::is_base_of_v<model::Ball, Unit>, Rational> { return 0; }
-    template <typename Unit> auto getArenaE(const Unit&) -> std::enable_if_t< std::is_base_of_v<model::Ball, Unit>, Rational> { return m_rules.BALL_ARENA_E; }
+    template <typename Robot> auto getMass(const Robot&)   -> std::enable_if_t<std::is_base_of_v<model::Robot, Robot>, Rational> { return m_rules.ROBOT_MASS; }
+    template <typename Robot> auto getMass(const Robot&)   -> std::enable_if_t<std::is_base_of_v<model::Ball,  Robot>, Rational> { return m_rules.BALL_MASS; }
+    template <typename Robot> auto getArenaE(const Robot&) -> std::enable_if_t<!std::is_base_of_v<model::Ball, Robot>, Rational> { return 0; }
+    template <typename Robot> auto getArenaE(const Robot&) -> std::enable_if_t< std::is_base_of_v<model::Ball, Robot>, Rational> { return m_rules.BALL_ARENA_E; }
 
     struct Dan     // just following SDK naming, Distance And Normal
     {

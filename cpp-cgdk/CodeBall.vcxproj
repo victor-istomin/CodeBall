@@ -310,8 +310,10 @@
     <ClCompile Include="DebugRender.cpp" />
     <ClCompile Include="goal.cpp" />
     <ClCompile Include="GoalAttackSingle.cpp" />
+    <ClCompile Include="Goalkeeper.cpp" />
     <ClCompile Include="goalManager.cpp" />
     <ClCompile Include="GoalTakeBallPair.cpp" />
+    <ClCompile Include="goalUtils.cpp" />
     <ClCompile Include="MyStrategy.cpp">
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Level4</WarningLevel>
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug_fast|Win32'">Level4</WarningLevel>
@@ -349,6 +351,7 @@
     <ClCompile Include="Tests.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="algebra.h" />
     <ClInclude Include="csimplesocket\ActiveSocket.h" />
     <ClInclude Include="csimplesocket\Host.h" />
     <ClInclude Include="csimplesocket\HTTPActiveSocket.h" />
@@ -357,8 +360,10 @@
     <ClInclude Include="csimplesocket\StatTimer.h" />
     <ClInclude Include="DebugRender.h" />
     <ClInclude Include="Entity.h" />
+    <ClInclude Include="forwards.h" />
     <ClInclude Include="goal.h" />
     <ClInclude Include="GoalAttackSingle.h" />
+    <ClInclude Include="Goalkeeper.h" />
     <ClInclude Include="goalManager.h" />
     <ClInclude Include="GoalTakeBallPair.h" />
     <ClInclude Include="goalUtils.h" />

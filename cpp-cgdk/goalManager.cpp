@@ -1,6 +1,7 @@
 #include "goalManager.h"
 #include "GoalTakeBallPair.h"
 #include "GoalAttackSingle.h"
+#include "Goalkeeper.h"
 #include "State.h"
 
 void GoalManager::fillCurrentGoals()
@@ -10,13 +11,14 @@ void GoalManager::fillCurrentGoals()
     if (m_state.isNewRound())
     {
         int priority = 0;
-        int backPriority = 256;
 
         m_forcedGoal = nullptr;
         m_currentGoals.clear();
 
-        m_currentGoals.emplace_back(priority++, std::make_unique<goals::TakeBallPair>(m_state, *this));
-        m_currentGoals.emplace_back(priority++, std::make_unique<goals::AttackSingle>(m_state, *this));
+//        m_currentGoals.emplace_back(priority++, std::make_unique<goals::TakeBallPair>(m_state, *this));
+//        m_currentGoals.emplace_back(priority++, std::make_unique<goals::AttackSingle>(m_state, *this));
+        m_currentGoals.emplace_back(priority++, std::make_unique<goals::Goalkeeper>(m_state, *this));
+
 
         m_currentGoals.sort();
     }

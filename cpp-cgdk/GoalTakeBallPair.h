@@ -16,8 +16,6 @@ class TakeBallPair : public Goal
 
     bool isBallReached();
 
-    std::optional<State::PredictedJumpHeight> jumpPrediction(double desiredHeight) const;
-
 public:
     TakeBallPair(State& state, GoalManager& goalManager);
     ~TakeBallPair();

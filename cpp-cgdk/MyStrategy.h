@@ -8,13 +8,10 @@
 #include "Strategy.h"
 #include "State.h"
 #include "Simulator.h"
+#include "forwards.h"
 
 #include <memory>
 
-class QuickStart_MyStrategy;
-class GoalManager;
-
-template <typename T> class Entity;
 
 class MyStrategy : public Strategy 
 {

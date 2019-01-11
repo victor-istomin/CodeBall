@@ -137,6 +137,6 @@ void Simulator::Test_Collide()
     auto sumMomentAfter = getMass(r) * r.velocity() + getMass(b) * b.velocity();
     auto distanceAfter = linalg::length(r.position() - b.position());
     assert(sumMoment == sumMomentAfter);
-    assert(Epsilon > std::abs(distanceAfter - (r.radius + b.radius)));
+    assert(k_Epsilon > std::abs(distanceAfter - (r.radius + b.radius)));
 }
 

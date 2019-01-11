@@ -6,8 +6,6 @@
 #include "goalUtils.h"
 
 using namespace goals;
-using Vec2d = Simulator::Vec2d;
-using Vec3d = Simulator::Vec3d;
 
 
 TakeBallPair::TakeBallPair(State& state, GoalManager& goalManager)
@@ -67,7 +65,7 @@ Goal::StepStatus TakeBallPair::rushIntoBall()
     if(predictedBallPos.has_value() && me.touch)   // only if robot touched ground
     {
         double desiredHeight = predictedBallPos->m_pos.y - (rules.ROBOT_MAX_RADIUS - rules.ROBOT_MIN_RADIUS);
-        std::optional<State::PredictedJumpHeight> predictedJump = jumpPrediction(desiredHeight);
+        std::optional<PredictedJumpHeight> predictedJump = jumpPrediction(desiredHeight, state());
 
         static constexpr double ACCURACY_THRESHOLD = 0.5;    // low accuracy because of a fixed jump speed
         if(predictedJump.has_value() && std::abs(predictedJump->m_height - desiredHeight) < ACCURACY_THRESHOLD)
@@ -101,36 +99,4 @@ bool TakeBallPair::isBallReached()
 
     return m_lastTick != TICK_NONE && state().game().current_tick > m_lastTick;
 }
-
-std::optional<State::PredictedJumpHeight> TakeBallPair::jumpPrediction(double desiredHeight) const
-{
-    const std::vector<State::PredictedJumpHeight>& predictions = state().jumpPredictions();
-
-    const State::PredictedJumpHeight* best = nullptr;
-    for(const State::PredictedJumpHeight& predicted : predictions)
-    {
-        if(predicted.m_velocity_y < 0)
-            break;   // look at upwards movement phase only
-
-        static constexpr const double JUMP_OVER_PENALTY  = 2;
-        static constexpr const double JUMP_UNDER_PENALTY = -1;
-
-        double bestDifference = best == nullptr ? std::numeric_limits<double>::max() : (best->m_height - desiredHeight);
-        double nextDifference = predicted.m_height - desiredHeight;
-
-        bestDifference *= bestDifference > 0 ? JUMP_OVER_PENALTY : JUMP_UNDER_PENALTY;
-        nextDifference *= nextDifference > 0 ? JUMP_OVER_PENALTY : JUMP_UNDER_PENALTY;
-
-        if(best == nullptr || nextDifference < bestDifference)
-        {
-            best = &predicted;
-        }
-    }
-
-    if(best != nullptr)
-        return *best;
-    
-    return std::nullopt;
-}
-
 

@@ -3,20 +3,30 @@
 #include "model/Rules.h"
 #include "model/Game.h"
 #include "model/Action.h"
-
-#undef min
-#undef max
-#include "linalg.h"
+#include "algebra.h"
 
 #include <vector>
 #include <optional>
 
+struct PredictedJumpHeight
+{
+    double m_height = 0;
+    double m_initialSpeed = 0;
+    double m_timeToReach = 0;
+    double m_velocity_y = 0;
+
+    PredictedJumpHeight(int tick, double initialSpeed, Vec3d&& pos, Vec3d&& velocity)
+        : m_height(pos.y)
+        , m_initialSpeed(initialSpeed)
+        , m_timeToReach(tick)
+        , m_velocity_y(velocity.y)
+    {
+    }
+};
+
 class State
 {
 public:
-    using Rational = double;
-    using Vec3d = linalg::vec<Rational, 3>;
-
     struct PredictedPos
     {
         int   m_tick = -1;
@@ -25,22 +35,6 @@ public:
 
         PredictedPos() = default;
         PredictedPos(int tick, Vec3d&& pos, Vec3d&& velocity) : m_tick(tick), m_pos(pos), m_velocity(velocity) {}
-    };
-
-    struct PredictedJumpHeight
-    {
-        double m_height       = 0;
-        double m_initialSpeed = 0;
-        double m_timeToReach  = 0;
-        double m_velocity_y   = 0;
-
-        PredictedJumpHeight(int tick, double initialSpeed, Vec3d&& pos, Vec3d&& velocity)
-            : m_height(pos.y)
-            , m_initialSpeed(initialSpeed)
-            , m_timeToReach(tick)
-            , m_velocity_y(velocity.y)
-        {
-        }
     };
 
 private:

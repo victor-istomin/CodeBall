@@ -1,15 +1,12 @@
 #pragma once
 #include "goal.h"
-#include "Simulator.h"
+#include "goalUtils.h"
 
 namespace goals
 {
 
 class AttackSingle : public Goal
 {
-    using Vec2d = Simulator::Vec2d;
-    using Vec3d = Simulator::Vec3d;
-
     bool isAttacker() const;
     bool canMove() const;
     bool isAttackPhase() const;
@@ -20,8 +17,6 @@ class AttackSingle : public Goal
     StepStatus reachAttackPos();
 
     StepStatus repeat();
-
-    int ticksToReach(const Vec3d& pos) const;
 
     static constexpr const int NONE = -1;
 
