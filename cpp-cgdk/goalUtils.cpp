@@ -40,28 +40,29 @@ int goals::ticksToReach(const Vec3d& target, State& state)
     return static_cast<int>(std::ceil(approachTimeTics));
 }
 
-std::optional<PredictedJumpHeight> goals::jumpPrediction(double desiredHeight, State& state)
+std::optional<PredictedJumpHeight> goals::jumpPrediction(State& state, const JumpScorintgPredicate& scoring)
 {
-    const std::vector<PredictedJumpHeight>& predictions = state.jumpPredictions();
+    const State::JumpPredictionMap& predictionsMap = state.jumpPredictions();
 
     const PredictedJumpHeight* best = nullptr;
-    for(const PredictedJumpHeight& predicted : predictions)
+    double bestScore = std::numeric_limits<double>::min();
+
+    for(auto itVelocityJumpPair = predictionsMap.rbegin(); itVelocityJumpPair != predictionsMap.rend(); ++itVelocityJumpPair)
     {
-        if(predicted.m_velocity_y < 0)
-            break;   // look at upwards movement phase only
+        const std::vector<PredictedJumpHeight>& predictions = itVelocityJumpPair->second;
 
-        static constexpr const double JUMP_OVER_PENALTY = 2;
-        static constexpr const double JUMP_UNDER_PENALTY = -1;
-
-        double bestDifference = best == nullptr ? std::numeric_limits<double>::max() : (best->m_height - desiredHeight);
-        double nextDifference = predicted.m_height - desiredHeight;
-
-        bestDifference *= bestDifference > 0 ? JUMP_OVER_PENALTY : JUMP_UNDER_PENALTY;
-        nextDifference *= nextDifference > 0 ? JUMP_OVER_PENALTY : JUMP_UNDER_PENALTY;
-
-        if(best == nullptr || nextDifference < bestDifference)
+        for(const PredictedJumpHeight& predicted: predictions)
         {
-            best = &predicted;
+            if(predicted.m_velocity_y < 0)
+                break;   // look at upwards movement phase only
+
+            double nextScore = scoring(predicted);
+
+            if(best == nullptr || nextScore > bestScore)
+            {
+                bestScore = nextScore;
+                best = &predicted;
+            }
         }
     }
 

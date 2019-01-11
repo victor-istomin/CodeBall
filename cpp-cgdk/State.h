@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <optional>
+#include <map>
 
 struct PredictedJumpHeight
 {
@@ -15,7 +16,7 @@ struct PredictedJumpHeight
     double m_timeToReach = 0;
     double m_velocity_y = 0;
 
-    PredictedJumpHeight(int tick, double initialSpeed, Vec3d&& pos, Vec3d&& velocity)
+    PredictedJumpHeight(int tick, double initialSpeed, const Vec3d& pos, const Vec3d& velocity)
         : m_height(pos.y)
         , m_initialSpeed(initialSpeed)
         , m_timeToReach(tick)
@@ -37,6 +38,8 @@ public:
         PredictedPos(int tick, Vec3d&& pos, Vec3d&& velocity) : m_tick(tick), m_pos(pos), m_velocity(velocity) {}
     };
 
+    typedef std::map<double/*initial speed*/, std::vector<PredictedJumpHeight>> JumpPredictionMap;
+
 private:
     using Score = std::pair<int/*mine*/, int/*their*/>;
 
@@ -50,8 +53,8 @@ private:
     bool m_isNewRound      = false;
     int  m_roundStartTick  = 0;
 
-    std::vector<PredictedPos>        m_ballPrediction;
-    std::vector<PredictedJumpHeight> m_jumpPredictions;
+    std::vector<PredictedPos> m_ballPrediction;
+    JumpPredictionMap         m_jumpPredictions;
 
 public:
     State();
@@ -69,8 +72,8 @@ public:
     const std::vector<PredictedPos>& ballPredictions() const        { return m_ballPrediction; }
     void invalidateBallPredictions();
 
-    void saveJumpPrediction(int tick, double initialSpeed, Vec3d&& pos, Vec3d&& velocity);
-    const std::vector<PredictedJumpHeight>& jumpPredictions() const { return m_jumpPredictions; }
+    void saveJumpPrediction(int tick, double initialSpeed, const Vec3d& pos, const Vec3d& velocity);
+    const JumpPredictionMap& jumpPredictions() const { return m_jumpPredictions; }
     
 
     void commitAction(const model::Action& a) 

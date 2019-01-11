@@ -1,6 +1,7 @@
 #pragma once
 #include "forwards.h"
 #include "algebra.h"
+#include <functional>
 
 namespace goals
 {
@@ -10,7 +11,9 @@ namespace goals
     bool canMoveImpl(const model::Robot& r);
     int ticksToReach(const Vec3d& target, State& state);
 
-    std::optional<PredictedJumpHeight> jumpPrediction(double desiredHeight, State& state);
+    using JumpScorintgPredicate = std::function<double(const PredictedJumpHeight&)>;
+
+    std::optional<PredictedJumpHeight> jumpPrediction(State& state, const JumpScorintgPredicate& scoring);
 
 }
 

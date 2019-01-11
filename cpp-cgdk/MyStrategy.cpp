@@ -222,34 +222,44 @@ void MyStrategy::initJumpPredictions()
 
     using EntityRobot = Entity<Robot>;
     using EntityBall = Entity<Ball>;
-    std::vector<EntityRobot> simRobots;
-    EntityBall simBall = m_state->game().ball;
-    simBall.setPosition({ 4, 4, 4 });      // don't collide with ball in this simulation
-
-    EntityRobot ghost = m_state->me();
-    ghost.setPosition({});
-    ghost.setVelocity({});
-    assert(ghost.touch);
-
-    Action jumpAction;
-    jumpAction.jump_speed = rules.ROBOT_MAX_JUMP_SPEED;
-    ghost.setAction(jumpAction);
-
-    simRobots.emplace_back(ghost);
 
     constexpr int SIM_TICKS = 50;
     const double tickTime = 1.0 / rules.TICKS_PER_SECOND;
     const double microtickTime = tickTime / rules.MICROTICKS_PER_TICK;
 
-    for(int tick = 0; tick != SIM_TICKS; ++tick)
+    for(double jumpSpeed = rules.ROBOT_MAX_JUMP_SPEED; jumpSpeed > 1; jumpSpeed -= 0.2)
     {
-        for(int microtick = 0; microtick < rules.MICROTICKS_PER_TICK; ++microtick)
-            m_simulator->update(simRobots, simBall, microtickTime);
+        std::vector<EntityRobot> simRobots;
+        EntityBall simBall = m_state->game().ball;
+        simBall.setPosition({ 4, 4, 4 });      // don't collide with ball in this simulation
 
-        m_state->saveJumpPrediction(tick, rules.ROBOT_MAX_JUMP_SPEED, simRobots.front().position(), simRobots.front().velocity());    // #todo - prepare table with multiple jump_speeds
+        EntityRobot ghost = m_state->me();
+        ghost.setPosition({});
+        ghost.setVelocity({});
+        assert(ghost.touch);
 
-        for(EntityRobot& r : simRobots)
-            r.setAction({});
+        Action jumpAction;
+        jumpAction.jump_speed = jumpSpeed;
+        ghost.setAction(jumpAction);
+
+        simRobots.emplace_back(ghost);
+
+        for(int tick = 0; tick != SIM_TICKS; ++tick)
+        {
+            for(int microtick = 0; microtick < rules.MICROTICKS_PER_TICK; ++microtick)
+                m_simulator->update(simRobots, simBall, microtickTime);
+
+            m_state->saveJumpPrediction(tick, jumpSpeed, simRobots.front().position(), simRobots.front().velocity());    // #todo - prepare table with multiple jump_speeds
+
+            for(EntityRobot& r : simRobots)
+                r.setAction({});
+        }
+
+        // speedup decreasing near interval center
+        const double halfSpeed = rules.ROBOT_MAX_JUMP_SPEED / 2;
+        double gap = (halfSpeed - std::abs(jumpSpeed - halfSpeed)) / (halfSpeed);
+        jumpSpeed -= gap;
     }
+
 }
 

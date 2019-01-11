@@ -20,6 +20,10 @@ TakeBallPair::~TakeBallPair()
 {
 }
 
+/**/
+#include <iostream>
+/**/
+
 Goal::StepStatus TakeBallPair::rushIntoBall()
 {
     Entity<model::Ball>  ball  = state().game().ball;
@@ -65,7 +69,20 @@ Goal::StepStatus TakeBallPair::rushIntoBall()
     if(predictedBallPos.has_value() && me.touch)   // only if robot touched ground
     {
         double desiredHeight = predictedBallPos->m_pos.y - (rules.ROBOT_MAX_RADIUS - rules.ROBOT_MIN_RADIUS);
-        std::optional<PredictedJumpHeight> predictedJump = jumpPrediction(desiredHeight, state());
+
+        auto scoring = [desiredHeight, &rules](const PredictedJumpHeight& prediction)
+        {
+            static constexpr const double JUMP_OVER_PENALTY  = 2;
+            static constexpr const double JUMP_UNDER_PENALTY = 1.5;
+
+            double diff = prediction.m_height - desiredHeight;
+            double weightedDiff = std::abs(diff * (diff > 0 ? JUMP_OVER_PENALTY : JUMP_UNDER_PENALTY));
+            weightedDiff += prediction.m_timeToReach * (rules.ROBOT_MIN_RADIUS / 5); // 1 tick "costs" 1/5 * robot_radius error
+            
+            return 100 / weightedDiff;
+        };
+
+        std::optional<PredictedJumpHeight> predictedJump = jumpPrediction(state(), scoring);
 
         static constexpr double ACCURACY_THRESHOLD = 0.5;    // low accuracy because of a fixed jump speed
         if(predictedJump.has_value() && std::abs(predictedJump->m_height - desiredHeight) < ACCURACY_THRESHOLD)
@@ -74,8 +91,10 @@ Goal::StepStatus TakeBallPair::rushIntoBall()
             //double ticksToLift2 = uniform_accel::distanceToTime(desiredHeight - me.radius, -rules.GRAVITY, rules.ROBOT_MAX_JUMP_SPEED) * rules.TICKS_PER_SECOND;
             if(ticksToLift > approachTimeTics)
             {
-                action.jump_speed = state().rules().ROBOT_MAX_JUMP_SPEED;
+                action.jump_speed = predictedJump->m_initialSpeed;
                 askTeammateToJump = true;
+
+                std::cout << "TakeBallPair::rushIntoBall() diff:" << std::abs(desiredHeight - predictedJump->m_height) << "; ticks: " << predictedJump->m_timeToReach << std::endl;
             }
         }
     }
