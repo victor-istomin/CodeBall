@@ -5,8 +5,7 @@
 namespace goals
 {
 
-class Goalkeeper :
-    public Goal
+class Goalkeeper : public Goal
 {
     bool isGoalkeeper() const;
     bool canMove() const;
@@ -25,6 +24,7 @@ private:
     int   m_keeperId  = NONE;
     Vec3d m_defendPos = {};
 
+    virtual bool isCompatibleWith(const Goal* interrupted) override;
 
 public:
     Goalkeeper(State& state, GoalManager& goalManager);

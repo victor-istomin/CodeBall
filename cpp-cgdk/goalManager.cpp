@@ -15,8 +15,8 @@ void GoalManager::fillCurrentGoals()
         m_forcedGoal = nullptr;
         m_currentGoals.clear();
 
-//        m_currentGoals.emplace_back(priority++, std::make_unique<goals::TakeBallPair>(m_state, *this));
-//        m_currentGoals.emplace_back(priority++, std::make_unique<goals::AttackSingle>(m_state, *this));
+        m_currentGoals.emplace_back(priority++, std::make_unique<goals::TakeBallPair>(m_state, *this));
+        m_currentGoals.emplace_back(priority++, std::make_unique<goals::AttackSingle>(m_state, *this));
         m_currentGoals.emplace_back(priority++, std::make_unique<goals::Goalkeeper>(m_state, *this));
 
 

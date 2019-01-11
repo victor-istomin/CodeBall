@@ -26,6 +26,9 @@ class AttackSingle : public Goal
 public:
     AttackSingle(State& state, GoalManager& goalManager);
     ~AttackSingle();
+private:
+    virtual bool isCompatibleWith(const Goal* interrupted) override;
+
 };
 
 }

@@ -1,4 +1,5 @@
 #include "GoalAttackSingle.h"
+#include "Goalkeeper.h"
 #include "goalUtils.h"
 #include "State.h"
 #include "noReleaseAssert.h"
@@ -100,7 +101,9 @@ Goal::StepStatus AttackSingle::findAttackPos()
     for(const State::PredictedPos& prediction : predictions)
     {
         const double thresholdY = rules.BALL_RADIUS + rules.ROBOT_MIN_RADIUS / 2;    // #todo - jump support
-        if(prediction.m_tick < game.current_tick || prediction.m_pos.y > thresholdY)
+        const double thresholdZ_min = -rules.arena.depth / 2 + rules.BALL_RADIUS * 4;    // #todo - reimplement, wrote in hurry. Purpose: don't mess with goalkeeper
+
+        if(prediction.m_tick < game.current_tick || prediction.m_pos.y > thresholdY || prediction.m_pos.z < thresholdZ_min)
             continue;
 
         meetingTick = game.current_tick + ticksToReach(prediction.m_pos, state());
@@ -165,5 +168,10 @@ Goal::StepStatus AttackSingle::reachAttackPos()
 bool AttackSingle::isGoalDone() const
 {
     return state().isChilloutPhase();
+}
+
+bool AttackSingle::isCompatibleWith(const Goal* interrupted)
+{
+    return nullptr != dynamic_cast<const Goalkeeper*>(interrupted);    // can do these goals in parallel
 }
 

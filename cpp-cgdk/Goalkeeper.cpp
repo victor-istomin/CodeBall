@@ -1,4 +1,5 @@
 #include "Goalkeeper.h"
+#include "GoalAttackSingle.h"
 #include "goalUtils.h"
 #include "State.h"
 #include "noReleaseAssert.h"
@@ -67,7 +68,9 @@ bool Goalkeeper::isDefendPhase() const
     const model::Robot& me  = state().me();
     const model::Ball& ball = state().game().ball;
 
-    return isGoalkeeper() && ball.z < 0 && ball.velocity_z < 0;
+    return isGoalkeeper() && 
+        (   (ball.z < 0 && ball.velocity_z < 0)
+          || state().me().z > -state().rules().arena.depth / 4);
 }
 
 bool Goalkeeper::isGoalDone() const
@@ -125,6 +128,8 @@ Goal::StepStatus Goalkeeper::findDefendPos()
         break;
     }
 
+    // #todo #bug 1st goal with seed=1
+
     DebugRender::instance().shpere(m_defendPos, rules.BALL_RADIUS + .1, { 1, 0, 0.5, .25 });
     DebugRender::instance().text(R"(defend by #%id pos: %pos, tick: %tick)"_fs
         .format("%id", state().me().id)
@@ -141,7 +146,21 @@ Goal::StepStatus Goalkeeper::findDefendPos()
         return StepStatus::Ok;
     }
 
-    return (m_defendPos != Vec3d{} && meetingTick != NO_MEETING) ? StepStatus::Done : StepStatus::Ok;
+    if(meetingTick == NO_MEETING)
+    {
+        // #todo - temporary hack, because there is no such pos support in this->reachDefendPos();
+
+        m_defendPos = { 0.0, 0.0, -(rules.arena.depth / 2.0) + rules.arena.bottom_radius };
+
+        Action action;
+        Vec3d diff = m_defendPos - me.position();
+        action.target_velocity_x = diff.x;
+        action.target_velocity_z = diff.z;
+
+        state().commitAction(action);
+    }
+
+    return m_defendPos != Vec3d{} ? StepStatus::Done : StepStatus::Ok;
 }
 
 Goal::StepStatus Goalkeeper::reachDefendPos()
@@ -187,5 +206,10 @@ Goal::StepStatus Goalkeeper::reachDefendPos()
 
     state().commitAction(action);
     return action.jump_speed == 0 ? StepStatus::Ok : StepStatus::Done;
+}
+
+bool goals::Goalkeeper::isCompatibleWith(const Goal* interrupted)
+{
+    return nullptr != dynamic_cast<const AttackSingle*>(interrupted);    // can do these goals in parallel
 }
 
