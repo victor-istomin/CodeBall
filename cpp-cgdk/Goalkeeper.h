@@ -9,7 +9,7 @@ class Goalkeeper : public Goal
 {
     bool isGoalkeeper() const;
     bool canMove() const;
-    bool isDefendPhase() const;
+    bool isDefendPhase();
     bool isGoalDone() const;
 
     StepStatus assignGoalkeeperId();
@@ -21,10 +21,13 @@ class Goalkeeper : public Goal
 private:
     static constexpr const int NONE = -1;
 
-    int   m_keeperId  = NONE;
-    Vec3d m_defendPos = {};
+    int   m_keeperId       = NONE;
+    int   m_lastDefendTick = NONE;
+    Vec3d m_defendPos      = {};
 
     virtual bool isCompatibleWith(const Goal* interrupted) override;
+
+    int ticksFromLastDefence() const;
 
 public:
     Goalkeeper(State& state, GoalManager& goalManager);

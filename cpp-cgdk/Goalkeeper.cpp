@@ -63,14 +63,20 @@ bool Goalkeeper::canMove() const
     return canMoveImpl(state().me());
 }
 
-bool Goalkeeper::isDefendPhase() const
+bool Goalkeeper::isDefendPhase()
 {
     const model::Robot& me  = state().me();
     const model::Ball& ball = state().game().ball;
 
-    return isGoalkeeper() && 
+    bool isDefend = isGoalkeeper() && 
         (   (ball.z < 0 && ball.velocity_z < 0)
-          || state().me().z > -state().rules().arena.depth / 4);
+          || state().goalPrediction().m_mineGates != State::INT_NONE);
+
+    constexpr int CANCELING_LATENCY = 30;
+    if (isDefend)
+        m_lastDefendTick = state().game().current_tick;
+
+    return isDefend || (ticksFromLastDefence() < CANCELING_LATENCY);
 }
 
 bool Goalkeeper::isGoalDone() const
@@ -220,8 +226,13 @@ Goal::StepStatus Goalkeeper::reachDefendPos()
     return action.jump_speed == 0 ? StepStatus::Ok : StepStatus::Done;
 }
 
-bool goals::Goalkeeper::isCompatibleWith(const Goal* interrupted)
+bool Goalkeeper::isCompatibleWith(const Goal* interrupted)
 {
     return nullptr != dynamic_cast<const AttackSingle*>(interrupted);    // can do these goals in parallel
+}
+
+int Goalkeeper::ticksFromLastDefence() const
+{
+    return m_lastDefendTick != NONE ? state().game().current_tick - m_lastDefendTick : std::numeric_limits<int>::max();
 }
 

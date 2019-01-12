@@ -48,9 +48,9 @@ void State::saveBallPos(int tick, Vec3d&& pos, Vec3d&& velocity)
     const double mineGoalZ  = -theirGoalZ;
 
     if(pos.z >= theirGoalZ)
-        m_goalPrediction.m_theirGates = std::min(m_goalPrediction.m_theirGates, tick);
+        m_goalPrediction.m_theirGates = m_goalPrediction.m_theirGates == INT_NONE ? tick : std::min(m_goalPrediction.m_theirGates, tick);
     if(pos.z <= mineGoalZ)
-        m_goalPrediction.m_mineGates = std::min(m_goalPrediction.m_mineGates, tick);
+        m_goalPrediction.m_mineGates = m_goalPrediction.m_mineGates == INT_NONE ? tick : std::min(m_goalPrediction.m_mineGates, tick);
 }
 
 std::optional<State::PredictedPos> State::predictedBallPos(int tick) const

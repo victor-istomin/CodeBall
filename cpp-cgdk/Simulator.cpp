@@ -373,11 +373,11 @@ Simulator::CollisionFlags Simulator::update(std::vector<Entity<model::Robot>>& r
     if(collide_with_arena(ball).has_value())
         collisions.ball = true;
 
-    // #todo - goal callback
-    // if (abs(ball.position.z) > arena.depth / 2 + ball.radius)
-    //     goal_scored();
+    // #todo st.3 - goal callback?
+    if(abs(ball.z) > m_rules.arena.depth / 2 + ball.radius)
+         ball.velocity_z = 0;    // there is no bounce from gates net
 
-    // #todo - nitro packs
+    // #todo st. 2- nitro packs
 
     return collisions;
 }
