@@ -163,10 +163,6 @@ Goal::StepStatus Goalkeeper::findDefendPos()
     return m_defendPos != Vec3d{} ? StepStatus::Done : StepStatus::Ok;
 }
 
-/**/
-#include <iostream>
-/**/
-
 Goal::StepStatus Goalkeeper::reachDefendPos()
 {
     const auto& predictions = state().ballPredictions();
@@ -219,8 +215,6 @@ Goal::StepStatus Goalkeeper::reachDefendPos()
     auto jumpInfo = jumpPrediction(state(), scoring);
     if(std::abs(jumpInfo->m_timeToReach - ticksToArrive) < k_Epsilon)
         action.jump_speed = jumpInfo->m_initialSpeed;
-
-    std::cout << "Goalkeeper::reachDefendPos() diff:" << std::abs(m_defendPos.y - jumpInfo->m_height) << "; ticks: " << jumpInfo->m_timeToReach << std::endl;
 
     state().commitAction(action);
     return action.jump_speed == 0 ? StepStatus::Ok : StepStatus::Done;

@@ -20,10 +20,6 @@ TakeBallPair::~TakeBallPair()
 {
 }
 
-/**/
-#include <iostream>
-/**/
-
 Goal::StepStatus TakeBallPair::rushIntoBall()
 {
     Entity<model::Ball>  ball  = state().game().ball;
@@ -93,8 +89,6 @@ Goal::StepStatus TakeBallPair::rushIntoBall()
             {
                 action.jump_speed = predictedJump->m_initialSpeed;
                 askTeammateToJump = true;
-
-                std::cout << "TakeBallPair::rushIntoBall() diff:" << std::abs(desiredHeight - predictedJump->m_height) << "; ticks: " << predictedJump->m_timeToReach << std::endl;
             }
         }
     }
