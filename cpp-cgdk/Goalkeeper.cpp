@@ -119,18 +119,22 @@ Goal::StepStatus Goalkeeper::findDefendPos()
     const double thresholdY = 4.7;    // #todo - wrote in rush, full jump support
     const double thresholdZ_min = -rules.arena.depth / 2 - rules.BALL_RADIUS * 1.9;   // #todo - implement full support for case when ball intersects goal point with unreachanble height (seed = 1, 1st goal with no other 'goals')
     const double thresholdZ_max = -rules.arena.depth / 2 + rules.BALL_RADIUS * 2;
+    const double thresholdX     =  rules.arena.goal_width / 2 + rules.arena.goal_side_radius;
 
     for(const State::PredictedPos& prediction : predictions)
     {
-        if(prediction.m_tick < game.current_tick || prediction.m_pos.y > thresholdY 
-            || prediction.m_pos.z < thresholdZ_min || prediction.m_pos.z > thresholdZ_max)
+        const Vec3d& predictionPos = prediction.m_pos;
+
+        if(prediction.m_tick < game.current_tick || predictionPos.y > thresholdY 
+            || predictionPos.z < thresholdZ_min || predictionPos.z > thresholdZ_max
+            || predictionPos.x < -thresholdX || predictionPos.x > thresholdX)
             continue;
 
-        meetingTick = game.current_tick + ticksToReach(prediction.m_pos, state());
+        meetingTick = game.current_tick + ticksToReach(predictionPos, state());
         if(meetingTick > prediction.m_tick)
             continue;
 
-        m_defendPos = prediction.m_pos;              // #todo after goalkeeper: don't use exact ball pos!
+        m_defendPos = predictionPos;              // #todo after goalkeeper: don't use exact ball pos!
         break;
     }
 
@@ -186,17 +190,24 @@ Goal::StepStatus Goalkeeper::reachDefendPos()
         return Goal::StepStatus::Done;     // abort this step, next step is entire goal repeat
     int ticksToArrive = itFound->m_tick - game.current_tick;
 
+    Vec3d desiredPos = m_defendPos;
+    // #todo - choose better desiredPos in order to bounce / intercept ball in better direction
+    // #todo - modify attacker in order to don't collide with goalkeeper
+//     static bool useOld = false;
+//     if(!useOld)
+//         desiredPos.y -= rules.BALL_RADIUS;   // try hit by robot center, so not decrement by ROBOT_RADIUS
+
     Vec2d meXZ     = { me.position().x, me.position().z };
-    Vec2d targetXZ = { m_defendPos.x, m_defendPos.z };
+    Vec2d targetXZ = { desiredPos.x, desiredPos.z };
     Vec2d displacementXZ = targetXZ - meXZ;
     Vec2d directionXZ    = linalg::normalize(displacementXZ);
 
-    double shorten = linalg::length(displacementXZ) / (linalg::length(displacementXZ) - rules.BALL_RADIUS - rules.ROBOT_MIN_RADIUS);
-    if(shorten > 1)
-        displacementXZ /= shorten;
+    //double shorten = linalg::length(displacementXZ) / (linalg::length(displacementXZ) - rules.BALL_RADIUS - rules.ROBOT_MIN_RADIUS);
+    //if(shorten > 1)
+    //    displacementXZ /= shorten;
 
     double distance = linalg::length(displacementXZ);
-    double needSpeedSI = distance / static_cast<double>(ticksToReach(m_defendPos, state())) * rules.TICKS_PER_SECOND;  // actually, not so SI: length units per second
+    double needSpeedSI = distance / static_cast<double>(ticksToReach(desiredPos, state())) * rules.TICKS_PER_SECOND;  // actually, not so SI: length units per second
     Vec2d targetSpeedXZ = directionXZ * needSpeedSI;
 
     Action action;
@@ -206,12 +217,12 @@ Goal::StepStatus Goalkeeper::reachDefendPos()
     if(linalg::length2(ball.position() - me.position()) < pow2(state().rules().ROBOT_MAX_RADIUS + state().rules().BALL_RADIUS))
         action.jump_speed = state().rules().ROBOT_MAX_JUMP_SPEED;
 
-    auto scoring = [this, &rules](const PredictedJumpHeight& prediction)
+    auto scoring = [desiredPos, &rules](const PredictedJumpHeight& prediction)
     {
         static constexpr const double JUMP_OVER_PENALTY = 2;
         static constexpr const double JUMP_UNDER_PENALTY = 1.5;
 
-        double diff = prediction.m_height - m_defendPos.y;
+        double diff = prediction.m_height - desiredPos.y;
         double weightedDiff = std::abs(diff * (diff > 0 ? JUMP_OVER_PENALTY : JUMP_UNDER_PENALTY));
         weightedDiff += prediction.m_timeToReach * (rules.ROBOT_MIN_RADIUS / 5); // 1 tick "costs" 1/5 * robot_radius error
 
