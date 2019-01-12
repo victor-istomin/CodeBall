@@ -43,6 +43,14 @@ void State::saveBallPos(int tick, Vec3d&& pos, Vec3d&& velocity)
 {
     assert((m_ballPrediction.empty() || tick > m_ballPrediction.back().m_tick) && "ticks should be sorted for this call");
     m_ballPrediction.emplace_back(tick, std::forward<Vec3d>(pos), std::forward<Vec3d>(velocity));
+
+    const double theirGoalZ = m_rules->arena.depth / 2 + m_rules->BALL_RADIUS;
+    const double mineGoalZ  = -theirGoalZ;
+
+    if(pos.z >= theirGoalZ)
+        m_goalPrediction.m_theirGates = m_goalPrediction.m_theirGates == INT_NONE ? tick : std::min(m_goalPrediction.m_theirGates, tick);
+    if(pos.z <= mineGoalZ)
+        m_goalPrediction.m_mineGates = m_goalPrediction.m_mineGates == INT_NONE ? tick : std::min(m_goalPrediction.m_mineGates, tick);
 }
 
 std::optional<State::PredictedPos> State::predictedBallPos(int tick) const
@@ -61,6 +69,7 @@ std::optional<State::PredictedPos> State::predictedBallPos(int tick) const
 void State::invalidateBallPredictions()
 {
     m_ballPrediction.resize(0);    // resize will not reduce capacity
+    m_goalPrediction = {};
 }
 
 void State::saveJumpPrediction(int tick, double initialSpeed, const Vec3d& pos, const Vec3d& velocity)

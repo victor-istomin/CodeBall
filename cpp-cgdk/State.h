@@ -28,14 +28,22 @@ struct PredictedJumpHeight
 class State
 {
 public:
+    static constexpr int INT_NONE = -1;
+
     struct PredictedPos
     {
-        int   m_tick = -1;
+        int   m_tick = INT_NONE;
         Vec3d m_pos;
         Vec3d m_velocity;
 
         PredictedPos() = default;
         PredictedPos(int tick, Vec3d&& pos, Vec3d&& velocity) : m_tick(tick), m_pos(pos), m_velocity(velocity) {}
+    };
+
+    struct GoalPredictionTick
+    {
+        int m_mineGates  = INT_NONE;
+        int m_theirGates = INT_NONE;
     };
 
     typedef std::map<double/*initial speed*/, std::vector<PredictedJumpHeight>> JumpPredictionMap;
@@ -55,6 +63,7 @@ private:
 
     std::vector<PredictedPos> m_ballPrediction;
     JumpPredictionMap         m_jumpPredictions;
+    GoalPredictionTick        m_goalPrediction;
 
 public:
     State();
@@ -74,6 +83,8 @@ public:
 
     void saveJumpPrediction(int tick, double initialSpeed, const Vec3d& pos, const Vec3d& velocity);
     const JumpPredictionMap& jumpPredictions() const { return m_jumpPredictions; }
+
+    const GoalPredictionTick& goalPrediction() const { return m_goalPrediction; }
     
 
     void commitAction(const model::Action& a) 
