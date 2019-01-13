@@ -4,6 +4,7 @@
 #include "model/Game.h"
 #include "model/Action.h"
 #include "algebra.h"
+#include "forwards.h"
 
 #include <vector>
 #include <optional>
@@ -46,7 +47,8 @@ public:
         int m_theirGates = INT_NONE;
     };
 
-    typedef std::map<double/*initial speed*/, std::vector<PredictedJumpHeight>> JumpPredictionMap;
+    using JumpPredictionMap = std::map<double/*initial speed*/, std::vector<PredictedJumpHeight>> ;
+    using EntityRobot       = Entity<model::Robot>;
 
 private:
     using Score = std::pair<int/*mine*/, int/*their*/>;
@@ -64,6 +66,8 @@ private:
     std::vector<PredictedPos> m_ballPrediction;
     JumpPredictionMap         m_jumpPredictions;
     GoalPredictionTick        m_goalPrediction;
+    std::vector<EntityRobot>  m_teammates;
+    std::vector<EntityRobot>  m_enemies;
 
 public:
     State();
@@ -85,7 +89,9 @@ public:
     const JumpPredictionMap& jumpPredictions() const { return m_jumpPredictions; }
 
     const GoalPredictionTick& goalPrediction() const { return m_goalPrediction; }
-    
+
+    const std::vector<EntityRobot>& teammates() const { return m_teammates; }
+    const std::vector<EntityRobot>& enemies() const { return m_enemies; }    
 
     void commitAction(const model::Action& a) 
     { 

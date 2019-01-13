@@ -105,50 +105,77 @@ Goal::StepStatus Goalkeeper::assignGoalkeeperId()
 Goal::StepStatus Goalkeeper::findDefendPos()
 {
     assert(isDefendPhase());
-    m_defendPos = {};
+    m_defendMap.clear();
 
     const auto& predictions = state().ballPredictions();
     const model::Game& game = state().game();
     const model::Rules& rules = state().rules();
-    Entity<Ball> ball = game.ball;
-    Entity<Robot> me = state().me();
+    const Entity<Ball> ball = game.ball;
 
-    constexpr static const int NO_MEETING = std::numeric_limits<int>::max();
-    int meetingTick = NO_MEETING;
-
-    const double thresholdY = 4.7;    // #todo - wrote in rush, full jump support
+    const double thresholdY     = 4.7;    // #todo - wrote in rush, full jump support
     const double thresholdZ_min = -rules.arena.depth / 2 - rules.BALL_RADIUS * 1.9;   // #todo - implement full support for case when ball intersects goal point with unreachanble height (seed = 1, 1st goal with no other 'goals')
     const double thresholdZ_max = -rules.arena.depth / 2 + rules.BALL_RADIUS * 2;
     const double thresholdX     =  rules.arena.goal_width / 2 + rules.arena.goal_side_radius;
 
-    for(const State::PredictedPos& prediction : predictions)
+    for(const Entity<Robot>& robot : state().teammates())
     {
-        const Vec3d& predictionPos = prediction.m_pos;
+        DefenceInfo defence = {};
 
-        if(prediction.m_tick < game.current_tick || predictionPos.y > thresholdY 
-            || predictionPos.z < thresholdZ_min || predictionPos.z > thresholdZ_max
-            || predictionPos.x < -thresholdX || predictionPos.x > thresholdX)
-            continue;
+        for(const State::PredictedPos& prediction : predictions)
+        {
+            const Vec3d& predictionPos = prediction.m_pos;
 
-        meetingTick = game.current_tick + ticksToReach(predictionPos, state());
-        if(meetingTick > prediction.m_tick)
-            continue;
+            if(prediction.m_tick < game.current_tick || predictionPos.y > thresholdY)
+                continue;
 
-        m_defendPos = predictionPos;              // #todo after goalkeeper: don't use exact ball pos!
-        break;
+            if(robot.id == m_keeperId     // goalkeeper should remain near gates
+                && ( predictionPos.z < thresholdZ_min || predictionPos.z > thresholdZ_max
+                  || predictionPos.x < -thresholdX || predictionPos.x > thresholdX)
+              )
+                 continue;
+
+            int roughtEta = ticksToReach(predictionPos, state());
+            int meetingTick = game.current_tick + roughtEta;
+            if(meetingTick > prediction.m_tick)
+                continue;
+
+            defence.ballPos = predictionPos;              // #todo after goalkeeper: don't use exact ball pos!
+            defence.meetingTick = meetingTick;
+            defence.ticksToReach = roughtEta;
+            break;
+        }
+
+        if(defence.meetingTick != NO_MEETING)
+            m_defendMap[robot.id] = defence;
+
+        DebugRender::instance().shpere(defence.ballPos, rules.BALL_RADIUS + .1, { 1, 0, 0.5, .25 });
+        DebugRender::instance().text(R"(defend: goalkeeper #%gc, defence by #%id pos: %pos, tick: %tick)"_fs
+                               .format("%gc",   m_keeperId)
+                               .format("%id",   robot.id)
+                               .format("%pos",  defence.ballPos)
+                               .format("%tick", defence.meetingTick)
+                               .move());
     }
 
-    // #todo #bug 1st goal with seed=1, choose incorrect defense point
+    // alternate defence pos
+    // #todo - temporary hack, because there is no such pos support in this->reachDefendPos();
+    const Robot& me = state().me();
+    Vec3d myPos = { me.x, me.y, me.z };
+    DefenceInfo& myDefence = m_defendMap[state().me().id];
+    if(myDefence.meetingTick == NO_MEETING)
+    {
+        myDefence.ballPos = { 0.0, 0.0, -(rules.arena.depth / 2.0) + rules.arena.bottom_radius };
+        Vec3d diff = myDefence.ballPos - myPos;
 
-    DebugRender::instance().shpere(m_defendPos, rules.BALL_RADIUS + .1, { 1, 0, 0.5, .25 });
-    DebugRender::instance().text(R"(defend by #%id pos: %pos, tick: %tick)"_fs
-        .format("%id", state().me().id)
-        .format("%pos", m_defendPos)
-        .format("%tick", meetingTick)
-        .move());
+        Action action;
+        action.target_velocity_x = diff.x;
+        action.target_velocity_z = diff.z;
+
+        state().commitAction(action);
+    }
 
     // in case if just stopped ball and it doesn't go into gates anymore
-    if(linalg::length2(ball.position() - me.position()) < pow2(state().rules().ROBOT_MAX_RADIUS + state().rules().BALL_RADIUS))
+    if(linalg::length2(ball.position() - myPos) < pow2(state().rules().ROBOT_MAX_RADIUS + state().rules().BALL_RADIUS))
     {
         model::Action action;
         action.jump_speed = state().rules().ROBOT_MAX_JUMP_SPEED;
@@ -156,21 +183,7 @@ Goal::StepStatus Goalkeeper::findDefendPos()
         return StepStatus::Ok;
     }
 
-    if(meetingTick == NO_MEETING)
-    {
-        // #todo - temporary hack, because there is no such pos support in this->reachDefendPos();
-
-        m_defendPos = { 0.0, 0.0, -(rules.arena.depth / 2.0) + rules.arena.bottom_radius };
-
-        Action action;
-        Vec3d diff = m_defendPos - me.position();
-        action.target_velocity_x = diff.x;
-        action.target_velocity_z = diff.z;
-
-        state().commitAction(action);
-    }
-
-    return m_defendPos != Vec3d{} ? StepStatus::Done : StepStatus::Ok;
+    return StepStatus::Done;
 }
 
 Goal::StepStatus Goalkeeper::reachDefendPos()
@@ -182,18 +195,21 @@ Goal::StepStatus Goalkeeper::reachDefendPos()
     Entity<model::Robot> me   = state().me();
     Entity<model::Ball>  ball = game.ball;
 
-    auto itFound = std::find_if(predictions.begin(), predictions.end(), [this](const State::PredictedPos& prediction) {
-        return prediction.m_pos == m_defendPos;
+    const Vec3d defendPos = getDefendPos(me.id);
+    auto itFound = std::find_if(predictions.begin(), predictions.end(), [&defendPos](const State::PredictedPos& prediction) {
+        return prediction.m_pos == defendPos;
     });
 
     if(predictions.end() == itFound)
         return Goal::StepStatus::Done;     // abort this step, next step is entire goal repeat
-    int ticksToArrive = itFound->m_tick - game.current_tick;
+    int ticksToBallArrive = itFound->m_tick - game.current_tick;
 
-    Vec3d desiredPos = m_defendPos;
-    desiredPos.y -= rules.BALL_RADIUS;   // try hit by robot center, so not decrement by ROBOT_RADIUS
     // #todo - choose better desiredPos in order to bounce / intercept ball in better direction
     // #todo - modify attacker in order to don't collide with goalkeeper
+    Vec3d desiredPos = defendPos;
+    desiredPos.y -= rules.BALL_RADIUS;   // try hit by robot center, so not decrement by ROBOT_RADIUS
+    if(me.id != m_keeperId)
+        desiredPos.z -= rules.ROBOT_RADIUS * 0.75;
 
     Vec2d meXZ     = { me.position().x, me.position().z };
     Vec2d targetXZ = { desiredPos.x, desiredPos.z };
@@ -228,7 +244,7 @@ Goal::StepStatus Goalkeeper::reachDefendPos()
     };
 
     auto jumpInfo = jumpPrediction(state(), scoring);
-    if(std::abs(jumpInfo->m_timeToReach - ticksToArrive) < k_Epsilon)
+    if(std::abs(jumpInfo->m_timeToReach - ticksToBallArrive) < k_Epsilon)
         action.jump_speed = jumpInfo->m_initialSpeed;
 
     state().commitAction(action);
@@ -243,5 +259,11 @@ bool Goalkeeper::isCompatibleWith(const Goal* interrupted)
 int Goalkeeper::ticksFromLastDefence() const
 {
     return m_lastDefendTick != NONE ? state().game().current_tick - m_lastDefendTick : std::numeric_limits<int>::max();
+}
+
+Vec3d Goalkeeper::getDefendPos(Id id) const
+{
+    auto itFound = m_defendMap.find(id);
+    return itFound != m_defendMap.end() ? itFound->second.ballPos : Vec3d{};
 }
 

@@ -1,7 +1,7 @@
 #include "State.h"
 #include <algorithm>
 #include "noReleaseAssert.h"
-
+#include "Entity.h"
 
 State::State()
 {
@@ -30,6 +30,16 @@ void State::updateState(const model::Robot& me, const model::Rules& rules, const
     m_isNewRound = isGoal && isBallAtStartPos();
     if(isBallAtStartPos())
         m_score = score;
+
+    m_teammates.clear();
+    m_enemies.clear();
+    for(const model::Robot& r : game.robots)
+    {
+        if(r.is_teammate)
+            m_teammates.emplace_back(r);
+        else
+            m_enemies.emplace_back(r);
+    }
 
     m_isMoveCommitted = false;
 }
