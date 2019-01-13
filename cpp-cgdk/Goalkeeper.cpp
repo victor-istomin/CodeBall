@@ -117,7 +117,17 @@ Goal::StepStatus Goalkeeper::findDefendPos()
     const double thresholdZ_max = -rules.arena.depth / 2 + rules.BALL_RADIUS * 2;
     const double thresholdX     =  rules.arena.goal_width / 2 + rules.arena.goal_side_radius;
 
-    for(const Entity<Robot>& robot : state().teammates())
+    auto teammates = state().teammates();
+
+    // calculate goalkeeper's defend pos first
+    auto itKeeper = std::find_if(teammates.begin(), teammates.end(), [this](const model::Robot& r) { return r.id == m_keeperId; });
+    if(itKeeper != teammates.end())
+    {
+        std::swap(*itKeeper, teammates.front());
+        itKeeper = teammates.begin();
+    }
+
+    for(const Entity<Robot>& robot : teammates)
     {
         DefenceInfo defence = {};
 
@@ -128,11 +138,25 @@ Goal::StepStatus Goalkeeper::findDefendPos()
             if(prediction.m_tick < game.current_tick || predictionPos.y > thresholdY)
                 continue;
 
-            if(robot.id == m_keeperId     // goalkeeper should remain near gates
-                && ( predictionPos.z < thresholdZ_min || predictionPos.z > thresholdZ_max
-                  || predictionPos.x < -thresholdX || predictionPos.x > thresholdX)
-              )
-                 continue;
+            if(robot.id == m_keeperId)     // goalkeeper should remain near gates
+            {
+                if(predictionPos.z < thresholdZ_min || predictionPos.z > thresholdZ_max
+                    || predictionPos.x < -thresholdX || predictionPos.x > thresholdX)
+                {
+                    continue;
+                }
+            }
+            else if(itKeeper != teammates.end())
+            {
+                // should not interfere with goalkeeper
+                Vec3d diffGK  = predictionPos - itKeeper->position();
+                Vec3d diffGKD = getDefendPos(itKeeper->id);
+                Rational diffThresholdSq = pow2(2 * rules.ROBOT_MAX_RADIUS + 2 * rules.BALL_RADIUS);
+
+                Rational minDistanceSq = std::min(linalg::length2(diffGK), linalg::length2(diffGKD));
+                if(predictionPos.z <= (-rules.arena.depth / 2) || minDistanceSq < diffThresholdSq)
+                    continue;
+            }
 
             int roughtEta = ticksToReach(predictionPos, state());
             int meetingTick = game.current_tick + roughtEta;

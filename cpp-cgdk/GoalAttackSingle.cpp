@@ -58,11 +58,15 @@ bool AttackSingle::isAttacker() const
 
 bool AttackSingle::isAttackPhase() const
 {
-    const model::Robot& me = state().me();
-    const model::Ball& ball = state().game().ball;
+    const Robot& me    = state().me();
+    const Ball&  ball  = state().game().ball;
+    const Rules& rules = state().rules();
+
+    const double thresholdZ = -rules.arena.depth / 2 + rules.BALL_RADIUS * 2;
 
     return isAttacker() 
-        && ((me.z > 0 && ball.z > 0) || me.z <= ball.z);    // we are on enemy side or the ball is between attacker and enemy gates
+        && (   (me.z > 0 && ball.z > 0) 
+            || (me.z <= ball.z && ball.z > thresholdZ));    // we are on enemy side or the ball is between attacker and enemy gates
 }
 
 bool AttackSingle::canMove() const
