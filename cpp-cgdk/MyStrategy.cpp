@@ -57,6 +57,9 @@ void MyStrategy::act(const Robot& me, const Rules& rules, const Game& game, Acti
         debugRender(ghostTick, game, lastSimTime);
     }
 
+    // #todo - other deferred actions?
+    action.use_nitro = false;
+
     m_goalManager->tick();
 
     return;
@@ -188,11 +191,13 @@ void MyStrategy::debugRender(int ghostTick, const model::Game& game, double last
     std::sort(teammates.begin(), teammates.end(), [](const Robot& a, const Robot& b) {return a.id < b.id; });
     std::sort(enemies.begin(), enemies.end(),     [](const Robot& a, const Robot& b) {return a.id < b.id; });
 
-    render.text(FormattedString(R"(act. team #0 pos: %t0p, v: %t0v, act. team #1 pos: %t1p, v: %t1v)")
+    render.text(FormattedString(R"(act. team #0 pos:%t0p, v:%t0v, n:%t0n, act. team #1 pos: %t1p, v: %t1v, n:%t1n)")
         .format("%t0v", Entity<model::Robot>(teammates[0]).velocity())
         .format("%t0p", Entity<model::Robot>(teammates[0]).position())
+        .format("%t0n", teammates[0].nitro_amount)
         .format("%t1v", Entity<model::Robot>(teammates[1]).velocity())
         .format("%t1p", Entity<model::Robot>(teammates[1]).position())
+        .format("%t1n", teammates[1].nitro_amount)
         .move());
 
     render.text(FormattedString(R"(act. enemy #0 pos: %e0p, v: %e0v, act. enemy #1 pos: %e1p, v: %e1v)")

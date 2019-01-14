@@ -112,12 +112,14 @@ Goal::StepStatus Goalkeeper::findDefendPos()
     const model::Rules& rules = state().rules();
     const Entity<Ball> ball = game.ball;
 
-    const double thresholdY     = 4.7;    // #todo - wrote in rush, full jump support
+    const double thresholdY     = 4.7 + rules.BALL_RADIUS;    // #todo - wrote in rush, full jump support
     const double thresholdZ_min = -rules.arena.depth / 2 - rules.BALL_RADIUS * 1.9;   // #todo - implement full support for case when ball intersects goal point with unreachanble height (seed = 1, 1st goal with no other 'goals')
     const double thresholdZ_max = -rules.arena.depth / 2 + rules.BALL_RADIUS * 2;
     const double thresholdX     =  rules.arena.goal_width / 2 + rules.arena.goal_side_radius;
 
     auto teammates = state().teammates();
+
+    // #todo #bug on seed = 2299944762, tag=v3:  WTF - 4th goal
 
     // calculate goalkeeper's defend pos first
     auto itKeeper = std::find_if(teammates.begin(), teammates.end(), [this](const model::Robot& r) { return r.id == m_keeperId; });
@@ -240,20 +242,32 @@ Goal::StepStatus Goalkeeper::reachDefendPos()
     Vec2d displacementXZ = targetXZ - meXZ;
     Vec2d directionXZ    = linalg::normalize(displacementXZ);
 
-    //double shorten = linalg::length(displacementXZ) / (linalg::length(displacementXZ) - rules.BALL_RADIUS - rules.ROBOT_MIN_RADIUS);
-    //if(shorten > 1)
-    //    displacementXZ /= shorten;
-
     double distance = linalg::length(displacementXZ);
-    double needSpeedSI = distance / static_cast<double>(ticksToReach(desiredPos, state())) * rules.TICKS_PER_SECOND;  // actually, not so SI: length units per second
+    double ticksToArrive = static_cast<double>(ticksToReach(desiredPos, state()));
+    double needSpeedSI = distance / ticksToArrive * rules.TICKS_PER_SECOND;  // actually, not so SI: length units per second
     Vec2d targetSpeedXZ = directionXZ * needSpeedSI;
 
     Action action;
     action.target_velocity_x = targetSpeedXZ[0];
     action.target_velocity_z = targetSpeedXZ[1];
 
-    if(linalg::length2(ball.position() - me.position()) < pow2(state().rules().ROBOT_MAX_RADIUS + state().rules().BALL_RADIUS))
+    double ballDistanceSq = linalg::length2(ball.position() - me.position());
+    const double hitDistanceSq = pow2(state().rules().ROBOT_MAX_RADIUS + state().rules().BALL_RADIUS);
+    const double nitroDistanceSq = pow2(state().rules().ROBOT_MAX_RADIUS * 1.3 + state().rules().BALL_RADIUS);    // #todo st. 2 something better
+
+    if(ballDistanceSq < hitDistanceSq)
+    {
         action.jump_speed = state().rules().ROBOT_MAX_JUMP_SPEED;
+    }
+    if(ball.z > me.z && ballDistanceSq < nitroDistanceSq)
+    {
+        Vec3d targetVelocity = linalg::normalize(ball.position() - me.position()) * rules.MAX_ENTITY_SPEED;
+        action.target_velocity_x = targetVelocity.x;
+        action.target_velocity_y = targetVelocity.y;
+        action.target_velocity_z = targetVelocity.z;
+        action.use_nitro = true;
+    }
+
 
     auto scoring = [desiredPos, &rules](const PredictedJumpHeight& prediction)
     {
