@@ -234,8 +234,15 @@ Goal::StepStatus Goalkeeper::reachDefendPos()
     // #todo - modify attacker in order to don't collide with goalkeeper
     Vec3d desiredPos = defendPos;
     desiredPos.y -= rules.BALL_RADIUS;   // try hit by robot center, so not decrement by ROBOT_RADIUS
-    if(me.id != m_keeperId)
-        desiredPos.z -= rules.ROBOT_RADIUS * 0.75;
+
+    Vec3d hitDisplacement = {};
+    if((ball.y - rules.BALL_RADIUS) > (me.y + rules.ROBOT_MAX_RADIUS * 1.5)   // actually, ball is over me
+        || ball.z >= me.z)                                                    //  ... or at least 'me' is closer to gates than actual ball 
+    {
+        hitDisplacement = { 0.0, 0.0, rules.ROBOT_RADIUS * 0.5 };
+    }
+
+    desiredPos -= hitDisplacement;
 
     Vec2d meXZ     = { me.position().x, me.position().z };
     Vec2d targetXZ = { desiredPos.x, desiredPos.z };
@@ -259,16 +266,19 @@ Goal::StepStatus Goalkeeper::reachDefendPos()
     const double hitDistanceSq = pow2(state().rules().ROBOT_MAX_RADIUS + state().rules().BALL_RADIUS);
     const double nitroDistanceSq = pow2(state().rules().ROBOT_MAX_RADIUS * 1.3 + state().rules().BALL_RADIUS);    // #todo st. 2 something better
 
+    Vec3d hitVelocity = linalg::normalize((ball.position() - hitDisplacement) - me.position()) * rules.MAX_ENTITY_SPEED;
     if(ballDistanceSq < hitDistanceSq)
     {
         action.jump_speed = state().rules().ROBOT_MAX_JUMP_SPEED;
+        action.target_velocity_x = hitVelocity.x;
+        action.target_velocity_y = 0;
+        action.target_velocity_z = hitVelocity.z;
     }
     if(ball.z > me.z && ballDistanceSq < nitroDistanceSq)
     {
-        Vec3d targetVelocity = linalg::normalize(ball.position() - me.position()) * rules.MAX_ENTITY_SPEED;
-        action.target_velocity_x = targetVelocity.x;
-        action.target_velocity_y = targetVelocity.y;
-        action.target_velocity_z = targetVelocity.z;
+        action.target_velocity_x = hitVelocity.x;
+        action.target_velocity_y = hitVelocity.y;
+        action.target_velocity_z = hitVelocity.z;
         action.use_nitro = true;
     }
 
@@ -285,6 +295,7 @@ Goal::StepStatus Goalkeeper::reachDefendPos()
         return 100 / weightedDiff;
     };
 
+    // #bug should take into account current speed, not time only
     auto jumpInfo = jumpPrediction(state(), scoring);
     if(std::abs(jumpInfo->m_timeToReach - ticksToBallArrive) < k_Epsilon)
         action.jump_speed = jumpInfo->m_initialSpeed;
