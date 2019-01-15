@@ -155,6 +155,11 @@ Goal::StepStatus AttackSingle::reachAttackPos()
     Vec2d meXZ = { me.position().x, me.position().z };
     Vec2d targetXZ = { target.x, target.z };
     Vec2d displacementXZ = targetXZ - meXZ;
+
+    double shorten = linalg::length(displacementXZ) / (linalg::length(displacementXZ) - rules.BALL_RADIUS - rules.ROBOT_MIN_RADIUS);
+    if(shorten > 1)
+        displacementXZ /= shorten;
+
     Vec2d directionXZ = linalg::normalize(displacementXZ);
 
     double distance = linalg::length(displacementXZ);
