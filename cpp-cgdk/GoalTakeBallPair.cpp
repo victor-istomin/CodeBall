@@ -6,14 +6,19 @@
 #include "goalUtils.h"
 
 using namespace goals;
-
+using namespace model;
 
 TakeBallPair::TakeBallPair(State& state, GoalManager& goalManager)
     : Goal(state, goalManager)
 {
-    pushBackStep([this]() { return this->isBallReached(); }, 
-                  Always()/*proceed*/, 
+    pushBackStep(Never{}/*abort*/,
+                 Always()/*proceed*/, 
                  [this]() { return this->rushIntoBall(); }, "rushIntoBall");
+
+    pushBackStep(Never{}/*abort*/,
+                 Always()/*proceed*/,
+                 [this]() { return this->rushIntoGround(); }, "rushIntoGround");
+
 }
 
 TakeBallPair::~TakeBallPair()
@@ -22,6 +27,9 @@ TakeBallPair::~TakeBallPair()
 
 Goal::StepStatus TakeBallPair::rushIntoBall()
 {
+    if(isBallReached())
+        return StepStatus::Done;
+
     Entity<model::Ball>  ball  = state().game().ball;
     Entity<model::Robot> me    = state().me();
     const model::Rules&  rules = state().rules();
@@ -111,5 +119,27 @@ bool TakeBallPair::isBallReached()
         m_lastTick = state().game().current_tick;    // in case if enemy or teammate has reached the ball
 
     return m_lastTick != TICK_NONE && state().game().current_tick > m_lastTick;
+}
+
+Goal::StepStatus TakeBallPair::rushIntoGround()
+{
+    const int currentTick = state().game().current_tick;
+    if(m_steerGroundTick == TICK_NONE)
+        m_steerGroundTick = currentTick;
+
+    if(state().me().y < k_Epsilon)
+        return Goal::StepStatus::Done;
+
+    bool isDefenceNeeded = state().goalPredictionTick().m_mineGates != State::INT_NONE;
+
+    Action action;
+    action.target_velocity_x = isDefenceNeeded ? 0                                 : state().me().velocity_x;
+    action.target_velocity_z = isDefenceNeeded ? -state().rules().MAX_ENTITY_SPEED : state().me().velocity_z;
+    action.target_velocity_y = -state().rules().MAX_ENTITY_SPEED;
+    action.use_nitro = true;
+    state().commitAction(action);
+
+    const int MAX_TICKS = isDefenceNeeded ? 2 : 4; // don't use too much nitro
+    return (currentTick - m_steerGroundTick) >= MAX_TICKS ? StepStatus::Done : StepStatus::Ok;
 }
 

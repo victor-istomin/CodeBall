@@ -58,9 +58,9 @@ void State::saveBallPos(int tick, Vec3d&& pos, Vec3d&& velocity)
     const double mineGoalZ  = -theirGoalZ;
 
     if(pos.z >= theirGoalZ)
-        m_goalPrediction.m_theirGates = m_goalPrediction.m_theirGates == INT_NONE ? tick : std::min(m_goalPrediction.m_theirGates, tick);
+        m_goalPredictionTick.m_theirGates = m_goalPredictionTick.m_theirGates == INT_NONE ? tick : std::min(m_goalPredictionTick.m_theirGates, tick);
     if(pos.z <= mineGoalZ)
-        m_goalPrediction.m_mineGates = m_goalPrediction.m_mineGates == INT_NONE ? tick : std::min(m_goalPrediction.m_mineGates, tick);
+        m_goalPredictionTick.m_mineGates = m_goalPredictionTick.m_mineGates == INT_NONE ? tick : std::min(m_goalPredictionTick.m_mineGates, tick);
 }
 
 std::optional<State::PredictedPos> State::predictedBallPos(int tick) const
@@ -79,7 +79,7 @@ std::optional<State::PredictedPos> State::predictedBallPos(int tick) const
 void State::invalidateBallPredictions()
 {
     m_ballPrediction.resize(0);    // resize will not reduce capacity
-    m_goalPrediction = {};
+    m_goalPredictionTick = {};
 }
 
 void State::saveJumpPrediction(int tick, double initialSpeed, const Vec3d& pos, const Vec3d& velocity)

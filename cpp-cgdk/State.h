@@ -65,7 +65,7 @@ private:
 
     std::vector<PredictedPos> m_ballPrediction;
     JumpPredictionMap         m_jumpPredictions;
-    GoalPredictionTick        m_goalPrediction;
+    GoalPredictionTick        m_goalPredictionTick;
     std::vector<EntityRobot>  m_teammates;
     std::vector<EntityRobot>  m_enemies;
 
@@ -88,7 +88,7 @@ public:
     void saveJumpPrediction(int tick, double initialSpeed, const Vec3d& pos, const Vec3d& velocity);
     const JumpPredictionMap& jumpPredictions() const { return m_jumpPredictions; }
 
-    const GoalPredictionTick& goalPrediction() const { return m_goalPrediction; }
+    const GoalPredictionTick& goalPredictionTick() const { return m_goalPredictionTick; }
 
     const std::vector<EntityRobot>& teammates() const { return m_teammates; }
     const std::vector<EntityRobot>& enemies() const { return m_enemies; }    

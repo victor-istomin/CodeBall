@@ -70,7 +70,7 @@ bool Goalkeeper::isDefendPhase()
 
     bool isDefend = isGoalkeeper() && 
         (   (ball.z < 0 && ball.velocity_z < 0)
-          || state().goalPrediction().m_mineGates != State::INT_NONE);
+          || state().goalPredictionTick().m_mineGates != State::INT_NONE);
 
     constexpr int CANCELING_LATENCY = 30;
     if (isDefend)
