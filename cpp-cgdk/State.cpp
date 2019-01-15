@@ -41,6 +41,9 @@ void State::updateState(const model::Robot& me, const model::Rules& rules, const
             m_enemies.emplace_back(r);
     }
 
+    std::sort(m_teammates.begin(), m_teammates.end(), [](const auto& a, const auto& b) {return a.id < b.id; });
+    std::sort(m_enemies.begin(),   m_enemies.end(),   [](const auto& a, const auto& b) {return a.id < b.id; });
+
     m_isMoveCommitted = false;
 }
 
