@@ -1,47 +1,27 @@
 #include "Simulator.h"
 
-#include <emmintrin.h>
-#include <smmintrin.h>
-
-struct SimdVec
-{
-    __m128d xy;
-    __m128d zw;
-
-    SimdVec() = default;
-    SimdVec(__m128d xy_, __m128d zw_) : xy(xy_), zw(zw_) {}
-
-    SimdVec(const linalg::vec<double, 3>& v)
-        : xy(_mm_loadu_pd(&v[0]))
-        , zw(_mm_set_sd(v.z))
-    {
-    }
-
-    linalg::vec<double, 3> toVec3d() const
-    {
-        linalg::vec<double, 3> result;
-        _mm_storeu_pd(&result[0], xy);
-        result.z = _mm_cvtsd_f64(zw);
-        return result;
-    }
-};
-
-double simdDot(const SimdVec& a, const SimdVec& b)
+__m128d simdDot_mm(const SimdVec& a, const SimdVec& b)
 {
     __m128d xy = _mm_dp_pd(a.xy, b.xy, 0xFF);
     __m128d zw = _mm_dp_pd(a.zw, b.zw, 0xFF);
-    __m128d sum = _mm_add_pd(xy, zw);
+    return _mm_add_pd(xy, zw);
+}
 
-    return _mm_cvtsd_f64(sum);
+double simdDot(const SimdVec& a, const SimdVec& b)
+{
+    return _mm_cvtsd_f64(simdDot_mm(a, b));
+}
+
+__m128d simdLengthSq(const SimdVec& v)
+{
+    __m128d xy = _mm_dp_pd(v.xy, v.xy, 0xFF);
+    __m128d zw = _mm_dp_pd(v.zw, v.zw, 0xFF);
+    return _mm_add_pd(xy, zw);
 }
 
 double simdLength(const SimdVec& v)
 {
-    __m128d xy = _mm_dp_pd(v.xy, v.xy, 0xFF);
-    __m128d zw = _mm_dp_pd(v.zw, v.zw, 0xFF);
-    __m128d root = _mm_sqrt_pd(_mm_add_pd(xy, zw));
-
-    return _mm_cvtsd_f64(root);
+    return _mm_cvtsd_f64(_mm_sqrt_pd(simdLengthSq(v)));
 }
 
 SimdVec simdDiff(const SimdVec& a, const SimdVec& b)
@@ -54,6 +34,49 @@ Simulator::Dan Simulator::dan_to_plane(const Vec3d& point, const Plane& plane)
 {
     Dan test{ simdDot(simdDiff(point, plane.point), plane.normal), plane.normal };
     return test;
+}
+
+DanTmp Simulator::dan_to_plane2(const SimdVec& point, const Plane& plane)
+{
+    DanTmp test{ simdDot_mm(  simdDiff(point, plane.point), plane.normal), SimdVec{ plane.normal } };
+    return test;
+}
+
+DanTmp min(const DanTmp& a, const DanTmp& b)
+{
+    DanTmp less;
+
+    __m128d mask = _mm_cmplt_pd(a.distance, b.distance);
+
+    less.distance = _mm_or_pd(_mm_and_pd   (mask, a.distance),
+                              _mm_andnot_pd(mask, b.distance));
+
+    less.draftNormal.xy = _mm_or_pd(_mm_and_pd   (mask, a.draftNormal.xy),
+                                    _mm_andnot_pd(mask, b.draftNormal.xy));
+
+    less.draftNormal.zw = _mm_or_pd(_mm_and_pd   (mask, a.draftNormal.zw),
+                                    _mm_andnot_pd(mask, b.draftNormal.zw));
+
+    return less;
+}
+
+Simulator::Dan Simulator::dan_to_wall(const SimdVec& point)
+{
+    const model::Arena& arena = m_rules.arena;
+
+    const Plane ground = { Vec3d{ 0, 0, 0 }, Vec3d{ 0, 1, 0 } };
+    const Plane ceiling = { Vec3d{ 0, arena.height, 0 }, Vec3d{ 0, -1, 0 } };
+    const Plane sideX = { Vec3d{arena.width / 2, 0, 0}, Vec3d{-1, 0 , 0} };
+    const Plane goalZ = { Vec3d{0, 0, (arena.depth / 2) + arena.goal_depth}, Vec3d{0, 0, -1} };
+
+    DanTmp dan_gr = dan_to_plane2(point, ground);
+    DanTmp dan_ce = dan_to_plane2(point, ceiling);
+    DanTmp dan_sx = dan_to_plane2(point, sideX);
+    DanTmp dan_go = dan_to_plane2(point, goalZ);
+
+    DanTmp less = min(min(min(dan_gr, dan_ce), dan_sx), dan_go);
+
+    return Dan{ _mm_cvtsd_f64(less.distance), less.draftNormal.toVec3d() };
 }
 
 Simulator::Dan Simulator::dan_to_sphere_inner(const Vec3d& point, const Sphere& sphere)
@@ -78,12 +101,10 @@ Simulator::Dan Simulator::dan_to_arena_quarter(const Vec3d& point)
     const Plane sideX = { Vec3d{arena.width / 2, 0, 0}, Vec3d{-1, 0 , 0} };
     const Plane goalZ = { Vec3d{0, 0, (arena.depth / 2) + arena.goal_depth}, Vec3d{0, 0, -1} };
 
-    Dan dan = std::min({
-            dan_to_plane(point, ground),
-            dan_to_plane(point, ceiling),
-            dan_to_plane(point, sideX),
-            dan_to_plane(point, goalZ),
-        });
+    Dan dan = dan_to_wall(point);
+
+    assert(dan.distance == dan2.distance);
+    assert(dan.normal == dan2.normal);
 
     const Vec2d pointXY = point.xy();
     Vec2d arenaSqGate = { (arena.goal_width / 2) - arena.goal_top_radius, arena.goal_height - arena.goal_top_radius };

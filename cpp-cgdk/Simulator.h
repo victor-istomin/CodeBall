@@ -23,6 +23,39 @@ linalg::vec<Rational, Dim> clamp(linalg::vec<Rational, Dim> vec, Rational max)
     return vec;
 };
 
+#include <emmintrin.h>
+#include <smmintrin.h>
+
+struct SimdVec
+{
+    __m128d xy;
+    __m128d zw;
+
+    SimdVec() = default;
+    SimdVec(__m128d xy_, __m128d zw_) : xy(xy_), zw(zw_) {}
+
+    SimdVec(const linalg::vec<double, 3>& v)
+        : xy(_mm_loadu_pd(&v[0]))
+        , zw(_mm_set_sd(v.z))
+    {
+    }
+
+    linalg::vec<double, 3> toVec3d() const
+    {
+        linalg::vec<double, 3> result;
+        _mm_storeu_pd(&result[0], xy);
+        result.z = _mm_cvtsd_f64(zw);
+        return result;
+    }
+};
+
+struct DanTmp
+{
+    __m128d distance;
+    SimdVec draftNormal;
+};
+
+
 
 class Simulator
 {
@@ -75,6 +108,10 @@ private:
     };
 
     static Dan dan_to_plane(const Vec3d& point, const Plane& plane);
+
+    static DanTmp dan_to_plane2(const SimdVec& point, const Plane& plane);
+    Simulator::Dan dan_to_wall(const SimdVec& point);
+
     static Dan dan_to_sphere_inner(const Vec3d& point, const Sphere& sphere);
     static Dan dan_to_sphere_outer(const Vec3d& point, const Sphere& sphere);
 
