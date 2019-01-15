@@ -1,14 +1,66 @@
 #include "Simulator.h"
 
+#include <emmintrin.h>
+#include <smmintrin.h>
+
+struct SimdVec
+{
+    __m128d xy;
+    __m128d zw;
+
+    SimdVec() = default;
+    SimdVec(__m128d xy_, __m128d zw_) : xy(xy_), zw(zw_) {}
+
+    SimdVec(const linalg::vec<double, 3>& v)
+        : xy(_mm_loadu_pd(&v[0]))
+        , zw(_mm_set_sd(v.z))
+    {
+    }
+
+    linalg::vec<double, 3> toVec3d() const
+    {
+        linalg::vec<double, 3> result;
+        _mm_storeu_pd(&result[0], xy);
+        result.z = _mm_cvtsd_f64(zw);
+        return result;
+    }
+};
+
+double simdDot(const SimdVec& a, const SimdVec& b)
+{
+    __m128d xy = _mm_dp_pd(a.xy, b.xy, 0xFF);
+    __m128d zw = _mm_dp_pd(a.zw, b.zw, 0xFF);
+    __m128d sum = _mm_add_pd(xy, zw);
+
+    return _mm_cvtsd_f64(sum);
+}
+
+double simdLength(const SimdVec& v)
+{
+    __m128d xy = _mm_dp_pd(v.xy, v.xy, 0xFF);
+    __m128d zw = _mm_dp_pd(v.zw, v.zw, 0xFF);
+    __m128d root = _mm_sqrt_pd(_mm_add_pd(xy, zw));
+
+    return _mm_cvtsd_f64(root);
+}
+
+SimdVec simdDiff(const SimdVec& a, const SimdVec& b)
+{
+    return SimdVec { _mm_sub_pd(a.xy, b.xy), _mm_sub_pd(a.zw, b.zw) };
+}
+
 
 Simulator::Dan Simulator::dan_to_plane(const Vec3d& point, const Plane& plane)
 {
-    return Dan{ linalg::dot(point - plane.point, plane.normal), plane.normal };
+    Dan test{ simdDot(simdDiff(point, plane.point), plane.normal), plane.normal };
+    return test;
 }
 
 Simulator::Dan Simulator::dan_to_sphere_inner(const Vec3d& point, const Sphere& sphere)
 {
-    return Dan{ sphere.radius - linalg::length(point - sphere.center), linalg::normalize(sphere.center - point) };
+    double length = simdLength(simdDiff(point, sphere.center));
+    Dan test1 { sphere.radius - length, simdDiff(sphere.center, point).toVec3d() / length };
+    return test1;
 }
 
 Simulator::Dan Simulator::dan_to_sphere_outer(const Vec3d& point, const Sphere& sphere)
@@ -262,7 +314,7 @@ Simulator::Dan Simulator::dan_to_arena_quarter(const Vec3d& point)
         {
             Vec2d corner_o /*SDK naming*/ = { (arena.width / 2) - arena.corner_radius, 
                                               (arena.depth / 2) - arena.corner_radius };
-            Vec2d dv /*SDK naming*/ = Vec2d{ point.x, point.z } -corner_o;
+            Vec2d dv /*SDK naming*/ = Vec2d{ point.x, point.z } - corner_o;
             if(linalg::length(dv) > (arena.corner_radius - arena.top_radius))
             {
                 Vec2d n  /*SDK naming*/ = normalize(dv);

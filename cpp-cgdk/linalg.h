@@ -53,6 +53,10 @@
 #include <array>        // For std::array, used in the relational operator overloads
 #include <limits>       // For std::numeric_limits/epsilon
 
+/**/
+#include <emmintrin.h>
+/**/
+
 // Visual Studio versions prior to 2015 lack constexpr support
 #if defined(_MSC_VER) && _MSC_VER < 1900 && !defined(constexpr)
 #define constexpr
@@ -288,6 +292,23 @@ namespace linalg
     template<class A, class B> constexpr arith_result_t<A,B> operator &  (const A & a, const B & b) { return zip(a, b, op::binary_and<scalar_t<A,B>>{}); }
     template<class A, class B> constexpr arith_result_t<A,B> operator << (const A & a, const B & b) { return zip(a, b, op::lshift<scalar_t<A,B>>{}); }
     template<class A, class B> constexpr arith_result_t<A,B> operator >> (const A & a, const B & b) { return zip(a, b, op::rshift<scalar_t<A,B>>{}); }
+
+    /**/
+    template<> inline vec<double, 2> operator +  (const vec<double, 2> & a, const vec<double, 2> & b) 
+    {
+        vec<double, 2> result;
+        _mm_storeu_pd(&result[0], _mm_add_pd(_mm_loadu_pd(&a[0]), _mm_loadu_pd(&b[0])));
+        return result;
+    }
+
+    template<> inline vec<double, 2> operator -  (const vec<double, 2> & a, const vec<double, 2> & b)
+    {
+        vec<double, 2> result;
+        _mm_storeu_pd(&result[0], _mm_sub_pd(_mm_loadu_pd(&a[0]), _mm_loadu_pd(&b[0])));
+        return result;
+    }
+
+    /**/
     
     // Overloads for assignment operators are implemented trivially
     template<class A, class B> result_t<A,A> & operator +=  (A & a, const B & b) { return a = a + b; }
