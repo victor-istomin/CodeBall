@@ -145,14 +145,17 @@ Goal::StepStatus AttackSingle::reachAttackPos()
     if(predictions.end() == itFound)
         return Goal::StepStatus::Done;     // abort this step, next step is entire goal repeat
 
+    Vec3d target = m_attackPos;
+    // #todo - does not work (decreases kick speed)
+//     double activeAttackZ = rules.arena.depth / 2 - 8 * rules.BALL_RADIUS;
+//     double activeAttackX = rules.arena.goal_width / 2;
+//     if(target.z > activeAttackZ && std::abs(target.x) < activeAttackX && )
+//         target.z -= rules.ROBOT_MIN_RADIUS;
+
     Vec2d meXZ = { me.position().x, me.position().z };
-    Vec2d targetXZ = { m_attackPos.x, m_attackPos.z };
+    Vec2d targetXZ = { target.x, target.z };
     Vec2d displacementXZ = targetXZ - meXZ;
     Vec2d directionXZ = linalg::normalize(displacementXZ);
-
-    double shorten = linalg::length(displacementXZ) / (linalg::length(displacementXZ) - rules.BALL_RADIUS - rules.ROBOT_MIN_RADIUS);
-    if(shorten > 1)
-        displacementXZ /= shorten;
 
     double distance = linalg::length(displacementXZ);
     double needSpeedSI = distance / static_cast<double>(ticksToReach(me, m_attackPos, state().rules())) * rules.TICKS_PER_SECOND;  // actually, not so SI: length units per second
@@ -162,8 +165,23 @@ Goal::StepStatus AttackSingle::reachAttackPos()
     action.target_velocity_x = targetSpeedXZ[0];
     action.target_velocity_z = targetSpeedXZ[1];
 
-    if(linalg::length2(ball.position() - me.position()) < pow2(state().rules().ROBOT_MAX_RADIUS + state().rules().BALL_RADIUS))
-        action.jump_speed = state().rules().ROBOT_MAX_JUMP_SPEED;
+    if(linalg::length2(ball.position() - me.position()) < pow2(rules.ROBOT_MAX_RADIUS + rules.BALL_RADIUS))
+    {
+        action.jump_speed = rules.ROBOT_MAX_JUMP_SPEED;
+
+        double thresholdZ = rules.arena.depth / 2 - 4 * rules.BALL_RADIUS - rules.ROBOT_MIN_RADIUS;
+        double thresholdX = rules.arena.goal_width / 2;
+        double minDiffZ   = rules.BALL_RADIUS;
+
+        if(std::abs(me.x) < thresholdX && std::abs(ball.x) < thresholdX && me.z > thresholdZ && (ball.z - me.z) > minDiffZ )
+        {
+            Vec3d hitSpeed = linalg::normalize(target - me.position()) * rules.MAX_ENTITY_SPEED;
+            action.use_nitro = true;
+            action.target_velocity_x = hitSpeed.x;
+            action.target_velocity_y = hitSpeed.y;
+            action.target_velocity_z = hitSpeed.z;
+        }
+    }
 
     state().commitAction(action);
     return action.jump_speed == 0 ? StepStatus::Ok : StepStatus::Done;
