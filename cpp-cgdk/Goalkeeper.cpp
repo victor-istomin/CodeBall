@@ -111,6 +111,7 @@ Goal::StepStatus Goalkeeper::findDefendPos()
     const model::Game& game = state().game();
     const model::Rules& rules = state().rules();
     const Entity<Ball> ball = game.ball;
+    const Entity<Robot> me = state().me();
 
     const double thresholdY     = 4.7 + rules.BALL_RADIUS;    // #todo - wrote in rush, full jump support
     const double thresholdZ_min = -rules.arena.depth / 2 - rules.BALL_RADIUS * 1.9;   // #todo - implement full support for case when ball intersects goal point with unreachanble height (seed = 1, 1st goal with no other 'goals')
@@ -160,7 +161,7 @@ Goal::StepStatus Goalkeeper::findDefendPos()
                     continue;
             }
 
-            int roughtEta = ticksToReach(predictionPos, state());
+            int roughtEta = ticksToReach(robot, predictionPos, state().rules());
             int meetingTick = game.current_tick + roughtEta;
             if(meetingTick > prediction.m_tick)
                 continue;
@@ -185,7 +186,6 @@ Goal::StepStatus Goalkeeper::findDefendPos()
 
     // alternate defence pos
     // #todo - temporary hack, because there is no such pos support in this->reachDefendPos();
-    const Robot& me = state().me();
     Vec3d myPos = { me.x, me.y, me.z };
     DefenceInfo& myDefence = m_defendMap[state().me().id];
     if(myDefence.meetingTick == NO_MEETING)
@@ -243,8 +243,12 @@ Goal::StepStatus Goalkeeper::reachDefendPos()
     Vec2d directionXZ    = linalg::normalize(displacementXZ);
 
     double distance = linalg::length(displacementXZ);
-    double ticksToArrive = static_cast<double>(ticksToReach(desiredPos, state()));
+    double ticksToArrive = static_cast<double>(ticksToReach(me, desiredPos, state().rules()));
     double needSpeedSI = distance / ticksToArrive * rules.TICKS_PER_SECOND;  // actually, not so SI: length units per second
+
+    if(ticksToArrive > rules.TICKS_PER_SECOND / 4)
+        needSpeedSI = rules.ROBOT_MAX_GROUND_SPEED;
+
     Vec2d targetSpeedXZ = directionXZ * needSpeedSI;
 
     Action action;

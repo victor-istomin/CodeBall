@@ -110,7 +110,7 @@ Goal::StepStatus AttackSingle::findAttackPos()
         if(prediction.m_tick < game.current_tick || prediction.m_pos.y > thresholdY || prediction.m_pos.z < thresholdZ_min)
             continue;
 
-        meetingTick = game.current_tick + ticksToReach(prediction.m_pos, state());
+        meetingTick = game.current_tick + ticksToReach(state().me(), prediction.m_pos, state().rules());
         if(meetingTick > prediction.m_tick)
             continue;
 
@@ -155,7 +155,7 @@ Goal::StepStatus AttackSingle::reachAttackPos()
         displacementXZ /= shorten;
 
     double distance = linalg::length(displacementXZ);
-    double needSpeedSI = distance / static_cast<double>(ticksToReach(m_attackPos, state())) * rules.TICKS_PER_SECOND;  // actually, not so SI: length units per second
+    double needSpeedSI = distance / static_cast<double>(ticksToReach(me, m_attackPos, state().rules())) * rules.TICKS_PER_SECOND;  // actually, not so SI: length units per second
     Vec2d targetSpeedXZ = directionXZ * needSpeedSI;
 
     Action action;

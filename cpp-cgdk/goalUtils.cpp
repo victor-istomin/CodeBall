@@ -13,21 +13,18 @@ bool goals::canMoveImpl(const model::Robot& r)
         || r.nitro_amount > 0;
 }
 
-int goals::ticksToReach(const Vec3d& target, State& state)
+int goals::ticksToReach(const Entity<model::Robot>& robot, const Vec3d& target, const model::Rules& rules)
 {
-    Entity<model::Robot> me    = state.me();
-    const model::Rules&  rules = state.rules();
-
-    Vec2d meXZ           = { me.position().x, me.position().z };
+    Vec2d robotXZ        = { robot.position().x, robot.position().z };
     Vec2d targetXZ       = { target.x, target.z };
-    Vec2d displacementXZ = targetXZ - meXZ;
+    Vec2d displacementXZ = targetXZ - robotXZ;
     Vec2d directionXZ    = linalg::normalize(displacementXZ);
 
     double shorten = linalg::length(displacementXZ) / (linalg::length(displacementXZ) - rules.BALL_RADIUS - rules.ROBOT_MIN_RADIUS);
     if(shorten > 1)
         displacementXZ /= shorten;
 
-    Vec2d meVelocityXZ = Vec2d{ me.velocity().x, me.velocity().z };
+    Vec2d meVelocityXZ = Vec2d{ robot.velocity().x, robot.velocity().z };
     double approachSpeed = linalg::dot(meVelocityXZ, directionXZ);
     double maxApproachSpeed = rules.ROBOT_MAX_GROUND_SPEED;
 
