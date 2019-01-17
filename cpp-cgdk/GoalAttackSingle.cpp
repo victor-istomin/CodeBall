@@ -139,8 +139,9 @@ Goal::StepStatus AttackSingle::reachAttackPos()
     if(predictions.end() == itFound)
         return Goal::StepStatus::Done;     // abort this step, next step is entire goal repeat
 
-    double secondsToWait = static_cast<double>(itFound->m_tick - game.current_tick) / rules.TICKS_PER_SECOND;
-    Vec3d target = m_attackPos;
+    int    ticksToWait = itFound->m_tick - game.current_tick;
+    double secondsToWait = static_cast<double>(ticksToWait) / rules.TICKS_PER_SECOND;
+    Vec3d  target = m_attackPos;
     // #todo - does not work (decreases kick speed)
 //     double activeAttackZ = rules.arena.depth / 2 - 8 * rules.BALL_RADIUS;
 //     double activeAttackX = rules.arena.goal_width / 2;
@@ -177,13 +178,23 @@ Goal::StepStatus AttackSingle::reachAttackPos()
             return jump.m_initialSpeed == rules.ROBOT_MAX_JUMP_SPEED ? 1 / std::abs(jump.m_height - desiredHeight) : 0;
         });
 
-    if(predictedJump && ticksToArrive2D <= predictedJump->m_timeToReach)
+    if(predictedJump && ticksToArrive2D <= predictedJump->m_timeToReach && std::abs(predictedJump->m_timeToReach - ticksToWait) <= 1)
     {
         action.jump_speed = predictedJump->m_initialSpeed;
     }
 
     // #todo - actually, this may fail detection of collision on next tick if robot speed is high
-    if(linalg::length2(ball.position() - me.position()) < pow2(rules.ROBOT_MAX_RADIUS + rules.BALL_RADIUS))
+    const double tickTime = 1.0 / rules.TICKS_PER_SECOND;
+    const double hitDistanceSq = pow2(rules.ROBOT_MAX_RADIUS + rules.BALL_RADIUS);
+
+    auto nextPos = [&tickTime](const Vec3d& pos, const Vec3d& speed)
+    {
+        return pos + speed * tickTime;
+    };
+
+    bool canHitNow     = linalg::length2(ball.position() - me.position()) < hitDistanceSq;
+    bool canHitEndTick = linalg::length2(nextPos(ball.position(), ball.velocity()) - nextPos(me.position(), me.velocity())) < hitDistanceSq;
+    if(canHitNow || canHitEndTick)
     {
         action.jump_speed = rules.ROBOT_MAX_JUMP_SPEED;
 
@@ -191,7 +202,8 @@ Goal::StepStatus AttackSingle::reachAttackPos()
         double thresholdX = rules.arena.goal_width / 2;
         double minDiffZ   = rules.BALL_RADIUS;
 
-        if(std::abs(me.x) < thresholdX && std::abs(ball.x) < thresholdX && me.z > thresholdZ && (ball.z - me.z) > minDiffZ )
+        if((!canHitNow && canHitEndTick) 
+            || (std::abs(me.x) < thresholdX && std::abs(ball.x) < thresholdX && me.z > thresholdZ && (ball.z - me.z) > minDiffZ ))
         {
             Vec3d hitSpeed = linalg::normalize(target - me.position()) * rules.MAX_ENTITY_SPEED;
             action.use_nitro = true;
