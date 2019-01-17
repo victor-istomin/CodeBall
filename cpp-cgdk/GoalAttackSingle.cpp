@@ -160,7 +160,7 @@ Goal::StepStatus AttackSingle::reachAttackPos()
     double distance = linalg::length(displacementXZ);
     //double secondsToReach = static_cast<double>(ticksToReach2D(me, m_attackPos, state().rules())) / rules.TICKS_PER_SECOND;
 
-    const double attackTime = 3 / rules.TICKS_PER_SECOND;
+    const double attackTime = 3 / rules.TICKS_PER_SECOND;  // #bug ! this is always 0 (int)
     double needSpeedSI = secondsToWait > attackTime ? distance / secondsToWait : 2 * rules.ROBOT_MAX_GROUND_SPEED;  // actually, not so SI: length units per second
     Vec2d targetSpeedXZ = directionXZ * needSpeedSI;
 
