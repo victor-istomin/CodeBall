@@ -97,6 +97,9 @@ public:
     { 
         *m_action = a; 
         m_isMoveCommitted = true;
+
+        double check = a.jump_speed + a.target_velocity_x + a.target_velocity_y + a.target_velocity_z;
+        assert(check <= std::numeric_limits<double>::max() && check >= std::numeric_limits<double>::lowest());  // SDK can't process inf.
     }
 
     bool isBallAtStartPos() const;

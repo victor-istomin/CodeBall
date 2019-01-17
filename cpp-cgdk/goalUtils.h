@@ -9,7 +9,8 @@ namespace goals
     struct Always { bool operator()() const { return true; } };
 
     bool canMoveImpl(const model::Robot& r);
-    int ticksToReach(const Entity<model::Robot>& robot, const Vec3d& target, const model::Rules& rules);
+    int ticksToReach2D(const Entity<model::Robot>& robot, const Vec3d& target, const model::Rules& rules);
+    int ticksToReach3D(const Entity<model::Robot>& robot, const Vec3d& target, const model::Rules& rules);
 
     using JumpScorintgPredicate = std::function<double(const PredictedJumpHeight&)>;
 

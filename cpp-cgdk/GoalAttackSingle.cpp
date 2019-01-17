@@ -104,26 +104,20 @@ Goal::StepStatus AttackSingle::findAttackPos()
     int meetingTick = std::numeric_limits<int>::max();
     for(const State::PredictedPos& prediction : predictions)
     {
-        const double thresholdY = rules.BALL_RADIUS + rules.ROBOT_MIN_RADIUS / 2;    // #todo - jump support
+        const double thresholdY = 2 * rules.BALL_RADIUS + rules.ROBOT_MIN_RADIUS;    // #todo - jump support
         const double thresholdZ_min = -rules.arena.depth / 2 + rules.BALL_RADIUS * 4;    // #todo - reimplement, wrote in hurry. Purpose: don't mess with goalkeeper
 
         if(prediction.m_tick < game.current_tick || prediction.m_pos.y > thresholdY || prediction.m_pos.z < thresholdZ_min)
             continue;
 
-        meetingTick = game.current_tick + ticksToReach(state().me(), prediction.m_pos, state().rules());
+        // #todo: ticksToReach3D
+        meetingTick = game.current_tick + ticksToReach3D(state().me(), prediction.m_pos, state().rules());
         if(meetingTick > prediction.m_tick)
             continue;
 
         m_attackPos = prediction.m_pos;              // #todo after goalkeeper: don't use exact ball pos!
         break;
     }
-
-    DebugRender::instance().shpere(m_attackPos, rules.BALL_RADIUS + .1, { 1, 0, 0, .25 });
-    DebugRender::instance().text(R"(attack by #%id pos: %pos, tick: %tick)"_fs
-        .format("%id", state().me().id)
-        .format("%pos", m_attackPos)
-        .format("%tick", meetingTick)
-        .move());
 
     return m_attackPos != Vec3d{} ? StepStatus::Done : StepStatus::Ok;
 }
@@ -145,6 +139,7 @@ Goal::StepStatus AttackSingle::reachAttackPos()
     if(predictions.end() == itFound)
         return Goal::StepStatus::Done;     // abort this step, next step is entire goal repeat
 
+    double secondsToWait = static_cast<double>(itFound->m_tick - game.current_tick) / rules.TICKS_PER_SECOND;
     Vec3d target = m_attackPos;
     // #todo - does not work (decreases kick speed)
 //     double activeAttackZ = rules.arena.depth / 2 - 8 * rules.BALL_RADIUS;
@@ -163,13 +158,31 @@ Goal::StepStatus AttackSingle::reachAttackPos()
     Vec2d directionXZ = linalg::normalize(displacementXZ);
 
     double distance = linalg::length(displacementXZ);
-    double needSpeedSI = distance / static_cast<double>(ticksToReach(me, m_attackPos, state().rules())) * rules.TICKS_PER_SECOND;  // actually, not so SI: length units per second
+    //double secondsToReach = static_cast<double>(ticksToReach2D(me, m_attackPos, state().rules())) / rules.TICKS_PER_SECOND;
+
+    const double attackTime = 3 / rules.TICKS_PER_SECOND;  // #bug ! this is always 0 (int)
+    double needSpeedSI = secondsToWait > attackTime ? distance / secondsToWait : 2 * rules.ROBOT_MAX_GROUND_SPEED;  // actually, not so SI: length units per second
     Vec2d targetSpeedXZ = directionXZ * needSpeedSI;
 
     Action action;
     action.target_velocity_x = targetSpeedXZ[0];
     action.target_velocity_z = targetSpeedXZ[1];
 
+    int ticksToArrive2D = ticksToReach2D(me, target/*ball?*/, rules/* #todo: custom acceleration = 0?*/);
+    double desiredHeight = target.y - rules.ROBOT_MIN_RADIUS;
+
+    auto predictedJump = jumpPrediction(state(), 
+        [desiredHeight, &rules](const PredictedJumpHeight& jump) 
+        { 
+            return jump.m_initialSpeed == rules.ROBOT_MAX_JUMP_SPEED ? 1 / std::abs(jump.m_height - desiredHeight) : 0;
+        });
+
+    if(predictedJump && ticksToArrive2D <= predictedJump->m_timeToReach)
+    {
+        action.jump_speed = predictedJump->m_initialSpeed;
+    }
+
+    // #todo - actually, this may fail detection of collision on next tick if robot speed is high
     if(linalg::length2(ball.position() - me.position()) < pow2(rules.ROBOT_MAX_RADIUS + rules.BALL_RADIUS))
     {
         action.jump_speed = rules.ROBOT_MAX_JUMP_SPEED;
@@ -187,6 +200,13 @@ Goal::StepStatus AttackSingle::reachAttackPos()
             action.target_velocity_z = hitSpeed.z;
         }
     }
+
+    DebugRender::instance().shpere(m_attackPos, rules.BALL_RADIUS + .1, { 1, 0, 0, .25 });
+    DebugRender::instance().text(R"(attack by #%id pos: %pos, tick: %tick)"_fs
+                           .format("%id", state().me().id)
+                           .format("%pos", m_attackPos)
+                           .format("%tick", itFound->m_tick)
+                           .move());
 
     state().commitAction(action);
     return action.jump_speed == 0 ? StepStatus::Ok : StepStatus::Done;
