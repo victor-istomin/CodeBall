@@ -161,7 +161,7 @@ Goal::StepStatus Goalkeeper::findDefendPos()
                     continue;
             }
 
-            int roughtEta = ticksToReach(robot, predictionPos, state().rules());
+            int roughtEta = ticksToReach2D(robot, predictionPos, state().rules());
             int meetingTick = game.current_tick + roughtEta;
             if(meetingTick > prediction.m_tick)
                 continue;
@@ -250,7 +250,7 @@ Goal::StepStatus Goalkeeper::reachDefendPos()
     Vec2d directionXZ    = linalg::normalize(displacementXZ);
 
     double distance = linalg::length(displacementXZ);
-    double ticksToArrive = static_cast<double>(ticksToReach(me, desiredPos, state().rules()));
+    double ticksToArrive = static_cast<double>(ticksToReach2D(me, desiredPos, state().rules()));
     double needSpeedSI = distance / ticksToArrive * rules.TICKS_PER_SECOND;  // actually, not so SI: length units per second
 
     if(ticksToArrive > rules.TICKS_PER_SECOND / 4)

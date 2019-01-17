@@ -20,7 +20,6 @@ MyStrategy::MyStrategy()
 }
 
 
-
 void MyStrategy::act(const Robot& me, const Rules& rules, const Game& game, Action& action)
 {
     if(!m_simulator)
@@ -61,6 +60,8 @@ void MyStrategy::act(const Robot& me, const Rules& rules, const Game& game, Acti
     action.use_nitro = false;
 
     m_goalManager->tick();
+
+    // #todo - check for infinity
 
     return;
 }

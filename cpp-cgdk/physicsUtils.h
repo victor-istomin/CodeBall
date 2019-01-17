@@ -1,5 +1,6 @@
 #pragma once
 #include <cmath>
+#include <numeric>
 
 template <typename Rational> 
 Rational pow2(Rational x) 
@@ -10,9 +11,9 @@ Rational pow2(Rational x)
 namespace uniform_accel     // uniform acceleration movement
 {
     template <typename Rational>
-    Rational timeToSpeed(Rational v0, Rational a, Rational t)
+    Rational timeToSpeed(Rational v0, Rational a, Rational t, Rational vMax = std::numeric_limits<Rational>::max())
     {
-        return v0 + a * t;
+        return std::min(v0 + a * t, vMax);
     }
 
     template <typename Rational>
@@ -27,12 +28,14 @@ namespace uniform_accel     // uniform acceleration movement
         return v0 * t + a * pow2(t) / 2;
     }
 
-//     template <typename Rational>
-//     Rational timeToStop(Rational v0, Rational a)
-//     {
-//         // s = (pow2(v) - pow2(v0)) / 2a, in this case v = 0:
-//         return pow2(v0) / (2 * a);
-//     }
+    template <typename Rational>
+    Rational timeToDistance(Rational v0, Rational a, Rational t, Rational vMax)
+    {
+        Rational tAccelerate = speedToTime(v0, a, vMax);
+        Rational tUniform    = std::max(0.0, t - tAccelerate);     // time at vMax, without acceleration
+
+        return timeToDistance(v0, a, tAccelerate) + timeToDistance(vMax, 0.0, tUniform);
+    }
 
     // min. time to run 's' distance
     template <typename Rational>
