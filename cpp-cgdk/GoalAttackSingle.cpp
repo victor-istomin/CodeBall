@@ -139,28 +139,21 @@ Goal::StepStatus AttackSingle::reachAttackPos()
     if(predictions.end() == itFound)
         return Goal::StepStatus::Done;     // abort this step, next step is entire goal repeat
 
-    double secondsToWait = static_cast<double>(itFound->m_tick - game.current_tick) / rules.TICKS_PER_SECOND;
-    Vec3d target = m_attackPos;
-    // #todo - does not work (decreases kick speed)
-//     double activeAttackZ = rules.arena.depth / 2 - 8 * rules.BALL_RADIUS;
-//     double activeAttackX = rules.arena.goal_width / 2;
-//     if(target.z > activeAttackZ && std::abs(target.x) < activeAttackX && )
-//         target.z -= rules.ROBOT_MIN_RADIUS;
+    int    ticksToWait = itFound->m_tick - game.current_tick;
+    double secondsToWait = static_cast<double>(ticksToWait) / rules.TICKS_PER_SECOND;
 
-    Vec2d meXZ = { me.position().x, me.position().z };
-    Vec2d targetXZ = { target.x, target.z };
+    Vec3d  targedDirection = linalg::normalize(m_attackPos - me.position());
+    Vec3d  targetDisplacement = targedDirection * (rules.BALL_RADIUS + 0.9 * rules.ROBOT_MIN_RADIUS);
+    Vec3d  target = m_attackPos - targetDisplacement;
+
+    Vec2d meXZ           = { me.position().x, me.position().z };
+    Vec2d targetXZ       = { target.x, target.z };
     Vec2d displacementXZ = targetXZ - meXZ;
-
-    double shorten = linalg::length(displacementXZ) / (linalg::length(displacementXZ) - rules.BALL_RADIUS - rules.ROBOT_MIN_RADIUS);
-    if(shorten > 1)
-        displacementXZ /= shorten;
-
-    Vec2d directionXZ = linalg::normalize(displacementXZ);
+    Vec2d directionXZ    = linalg::normalize(displacementXZ);
 
     double distance = linalg::length(displacementXZ);
-    //double secondsToReach = static_cast<double>(ticksToReach2D(me, m_attackPos, state().rules())) / rules.TICKS_PER_SECOND;
 
-    const double attackTime = 3 / rules.TICKS_PER_SECOND;  // #bug ! this is always 0 (int)
+    const double attackTime = 3 / rules.TICKS_PER_SECOND;  // #todo #bug ! this is always 0 (int)
     double needSpeedSI = secondsToWait > attackTime ? distance / secondsToWait : 2 * rules.ROBOT_MAX_GROUND_SPEED;  // actually, not so SI: length units per second
     Vec2d targetSpeedXZ = directionXZ * needSpeedSI;
 
@@ -168,22 +161,35 @@ Goal::StepStatus AttackSingle::reachAttackPos()
     action.target_velocity_x = targetSpeedXZ[0];
     action.target_velocity_z = targetSpeedXZ[1];
 
-    int ticksToArrive2D = ticksToReach2D(me, target/*ball?*/, rules/* #todo: custom acceleration = 0?*/);
-    double desiredHeight = target.y - rules.ROBOT_MIN_RADIUS;
+    double airAcceleration = 0;   // #todo st.3 - may be >0 with #nitro
+    double timeToArrive2D  = timeToReach2D_Ex(me.position(), target, me.velocity(), airAcceleration, rules.MAX_ENTITY_SPEED);
+    int    ticksToArrive2D = timeToArrive2D * rules.TICKS_PER_SECOND;
+
+    double desiredHeight = target.y;
 
     auto predictedJump = jumpPrediction(state(), 
         [desiredHeight, &rules](const PredictedJumpHeight& jump) 
         { 
-            return jump.m_initialSpeed == rules.ROBOT_MAX_JUMP_SPEED ? 1 / std::abs(jump.m_height - desiredHeight) : 0;
+            return std::abs(jump.m_initialSpeed - rules.ROBOT_MAX_JUMP_SPEED) < k_Epsilon ? 1 / std::abs(jump.m_height - desiredHeight) : 0;
         });
 
-    if(predictedJump && ticksToArrive2D <= predictedJump->m_timeToReach)
+    if(predictedJump && ticksToArrive2D <= predictedJump->m_timeToReach && std::abs(predictedJump->m_timeToReach - ticksToWait) <= 1)
     {
         action.jump_speed = predictedJump->m_initialSpeed;
     }
 
     // #todo - actually, this may fail detection of collision on next tick if robot speed is high
-    if(linalg::length2(ball.position() - me.position()) < pow2(rules.ROBOT_MAX_RADIUS + rules.BALL_RADIUS))
+    const double tickTime = 1.0 / rules.TICKS_PER_SECOND;
+    const double hitDistanceSq = pow2(rules.ROBOT_MAX_RADIUS + rules.BALL_RADIUS);
+
+    auto nextPos = [&tickTime](const Vec3d& pos, const Vec3d& speed)
+    {
+        return pos + speed * tickTime;
+    };
+
+    bool canHitNow     = linalg::length2(ball.position() - me.position()) < hitDistanceSq;
+    bool canHitEndTick = linalg::length2(nextPos(ball.position(), ball.velocity()) - nextPos(me.position(), me.velocity())) < hitDistanceSq;
+    if(canHitNow || canHitEndTick)
     {
         action.jump_speed = rules.ROBOT_MAX_JUMP_SPEED;
 
@@ -191,7 +197,8 @@ Goal::StepStatus AttackSingle::reachAttackPos()
         double thresholdX = rules.arena.goal_width / 2;
         double minDiffZ   = rules.BALL_RADIUS;
 
-        if(std::abs(me.x) < thresholdX && std::abs(ball.x) < thresholdX && me.z > thresholdZ && (ball.z - me.z) > minDiffZ )
+        if((!canHitNow && canHitEndTick) 
+            || (std::abs(me.x) < thresholdX && std::abs(ball.x) < thresholdX && me.z > thresholdZ && (ball.z - me.z) > minDiffZ ))
         {
             Vec3d hitSpeed = linalg::normalize(target - me.position()) * rules.MAX_ENTITY_SPEED;
             action.use_nitro = true;
@@ -202,6 +209,7 @@ Goal::StepStatus AttackSingle::reachAttackPos()
     }
 
     DebugRender::instance().shpere(m_attackPos, rules.BALL_RADIUS + .1, { 1, 0, 0, .25 });
+    DebugRender::instance().shpere(target,      rules.ROBOT_MAX_RADIUS, { 1, 0, 0, .50 });
     DebugRender::instance().text(R"(attack by #%id pos: %pos, tick: %tick)"_fs
                            .format("%id", state().me().id)
                            .format("%pos", m_attackPos)
