@@ -10,4 +10,4 @@ using Vec2d = linalg::vec<Rational, 2>;
 
 constexpr static Rational k_Epsilon = 1e-6;
 
-
+// text
